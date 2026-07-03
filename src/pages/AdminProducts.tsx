@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, AlertTriangle, Package, Upload, X, Loader2, Search, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Package, Upload, X, Loader2, Search, Globe, ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 interface EditingProduct {
   id?: string;
@@ -172,17 +172,15 @@ const AdminProducts = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || !editingProduct) return;
+    if (!files || !editingProduct || files.length === 0) return;
     setUploading(true);
     try {
-      const newImages = [...editingProduct.images];
-      for (const file of Array.from(files)) {
-        const url = await uploadProductImage(file);
-        newImages.push(url);
-      }
-      setEditingProduct({ ...editingProduct, images: newImages });
+      const uploadPromises = Array.from(files).map((file) => uploadProductImage(file));
+      const urls = await Promise.all(uploadPromises);
+      setEditingProduct({ ...editingProduct, images: [...editingProduct.images, ...urls] });
+      toast({ title: "Images uploadées" });
     } catch (err) {
-      toast({ title: "Erreur upload", description: "Impossible d'uploader l'image", variant: "destructive" });
+      toast({ title: "Erreur upload", description: "Impossible d'uploader les images", variant: "destructive" });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -193,6 +191,27 @@ const AdminProducts = () => {
     if (!editingProduct) return;
     const newImages = [...editingProduct.images];
     newImages.splice(index, 1);
+    setEditingProduct({ ...editingProduct, images: newImages });
+  };
+
+  const moveImage = (index: number, direction: "left" | "right") => {
+    if (!editingProduct) return;
+    const newImages = [...editingProduct.images];
+    const targetIndex = direction === "left" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newImages.length) return;
+    
+    const temp = newImages[index];
+    newImages[index] = newImages[targetIndex];
+    newImages[targetIndex] = temp;
+    
+    setEditingProduct({ ...editingProduct, images: newImages });
+  };
+
+  const setAsCoverImage = (index: number) => {
+    if (!editingProduct || index === 0) return;
+    const newImages = [...editingProduct.images];
+    const [selectedImage] = newImages.splice(index, 1);
+    newImages.unshift(selectedImage);
     setEditingProduct({ ...editingProduct, images: newImages });
   };
 
@@ -673,14 +692,67 @@ const AdminProducts = () => {
                       Images du produit
                     </h3>
                     <div className="p-4 border border-border border-dashed rounded-lg bg-muted/5">
-                      <div className="flex flex-wrap gap-2.5 mb-4">
+                      <div className="flex flex-wrap gap-3 mb-4">
                         {editingProduct.images.map((img, i) => (
-                          <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border shadow-sm group bg-muted">
-                            <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
-                            <button type="button" onClick={() => removeImage(i)}
-                              className="absolute top-1 right-1 p-1 bg-destructive/90 text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
-                              <X className="w-3 h-3" />
-                            </button>
+                          <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border shadow-sm group bg-muted flex flex-col justify-between">
+                            <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover absolute inset-0 z-0" />
+                            
+                            {/* Overlay and controls */}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex flex-col justify-between p-1.5">
+                              <div className="flex justify-between items-center w-full">
+                                {i > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAsCoverImage(i)}
+                                    className="p-1 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                                    title="Définir comme principale"
+                                  >
+                                    <Star className="w-3 h-3 fill-current" />
+                                  </button>
+                                ) : (
+                                  <div className="w-5" />
+                                )}
+                                <button 
+                                  type="button" 
+                                  onClick={() => removeImage(i)}
+                                  className="p-1 bg-destructive text-destructive-foreground rounded hover:bg-destructive/95 transition-colors"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              <div className="flex justify-between w-full">
+                                {i > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => moveImage(i, "left")}
+                                    className="p-1 bg-background text-foreground rounded hover:bg-accent transition-colors"
+                                  >
+                                    <ChevronLeft className="w-3 h-3" />
+                                  </button>
+                                ) : (
+                                  <div className="w-5" />
+                                )}
+                                {i < editingProduct.images.length - 1 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => moveImage(i, "right")}
+                                    className="p-1 bg-background text-foreground rounded hover:bg-accent transition-colors"
+                                  >
+                                    <ChevronRight className="w-3 h-3" />
+                                  </button>
+                                ) : (
+                                  <div className="w-5" />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* "Principale" badge */}
+                            {i === 0 && (
+                              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-primary text-[9px] font-medium text-primary-foreground rounded shadow-sm z-20">
+                                Principale
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>

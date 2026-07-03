@@ -37,7 +37,8 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
 
   const totalValue = pack.items.reduce((sum, item) => sum + getItemPrice(item) * (item.quantity || 1), 0);
   const savings = totalValue - discountedPrice;
-  const hasPackImage = pack.image && pack.image !== "/placeholder.svg";
+  const displayImage = pack.images && pack.images.length > 0 ? pack.images[0] : (pack.image || "/placeholder.svg");
+  const hasPackImage = displayImage && displayImage !== "/placeholder.svg";
   const firstProductImage = pack.items[0]?.product_image || "/placeholder.svg";
 
   const flashPromo = getFlashPromos().find(fp =>
@@ -64,7 +65,7 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
       longDescription_ar: pack.long_description_ar || undefined,
       longDescription_en: pack.long_description_en || undefined,
       materials: "",
-      images: [hasPackImage ? pack.image : firstProductImage],
+      images: pack.images && pack.images.length > 0 ? pack.images : [hasPackImage ? displayImage : firstProductImage],
       items: pack.items,
     } as any);
     toast({ title: t("pack.addedToCart"), description: getTranslated(pack, "name", lang) });
@@ -92,7 +93,7 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
         longDescription_ar: pack.long_description_ar || undefined,
         longDescription_en: pack.long_description_en || undefined,
         materials: "",
-        images: [hasPackImage ? pack.image : firstProductImage],
+        images: pack.images && pack.images.length > 0 ? pack.images : [hasPackImage ? displayImage : firstProductImage],
         items: pack.items,
       } as any);
       toast({ title: t("productDetail.addedToFavorites"), description: getTranslated(pack, "name", lang) });
@@ -106,7 +107,7 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
       <div className="relative aspect-video bg-muted/30 overflow-hidden">
         {hasPackImage ? (
           <img
-            src={pack.image}
+            src={displayImage}
             alt={getTranslated(pack, "name", lang)}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"

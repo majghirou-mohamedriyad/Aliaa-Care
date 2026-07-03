@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Package, Loader2, Search, X, AlertTriangle, Upload, ImageIcon, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Search, X, AlertTriangle, Upload, ImageIcon, Globe, ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 interface EditingPack {
   id?: string;
@@ -33,6 +33,7 @@ interface EditingPack {
   long_description: string;
   price: number;
   image: string;
+  images: string[];
   active: boolean;
   featured: boolean;
   items: { product_id: string; quantity: number; selected_weight?: string | null }[];
@@ -46,7 +47,7 @@ interface EditingPack {
 
 const emptyPack: EditingPack = {
   name: "", slug: "", description: "", long_description: "",
-  price: 0, image: "/placeholder.svg", active: true, featured: false, items: [],
+  price: 0, image: "/placeholder.svg", images: [], active: true, featured: false, items: [],
   name_ar: "", name_en: "", description_ar: "", description_en: "",
   long_description_ar: "", long_description_en: "",
 };
@@ -110,6 +111,7 @@ const AdminPacks = () => {
         setEditing({
           id: p.id, name: p.name, slug: p.slug, description: p.description,
           long_description: p.long_description, price: p.price, image: p.image,
+          images: p.images || [],
           active: p.active, featured: p.featured,
           items: packItems,
           name_ar: p.name_ar || "",
@@ -179,6 +181,61 @@ const AdminPacks = () => {
     setEditing({ ...editing, items: updatedItems });
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !editing || files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const compressed = await compressImage(file);
+        const path = `packs/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+        const { error } = await supabase.storage.from("product-images").upload(path, compressed, {
+          contentType: "image/webp",
+        });
+        if (error) throw error;
+        const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+        return data.publicUrl;
+      });
+      const urls = await Promise.all(uploadPromises);
+      setEditing({ ...editing, images: [...(editing.images || []), ...urls] });
+      toast({ title: "Images uploadées" });
+    } catch (err) {
+      toast({ title: "Erreur", description: "Impossible d'uploader les images", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removeImage = (index: number) => {
+    if (!editing) return;
+    const newImages = [...(editing.images || [])];
+    newImages.splice(index, 1);
+    setEditing({ ...editing, images: newImages });
+  };
+
+  const moveImage = (index: number, direction: "left" | "right") => {
+    if (!editing) return;
+    const newImages = [...(editing.images || [])];
+    const targetIndex = direction === "left" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newImages.length) return;
+    
+    // Swap
+    const temp = newImages[index];
+    newImages[index] = newImages[targetIndex];
+    newImages[targetIndex] = temp;
+    
+    setEditing({ ...editing, images: newImages });
+  };
+
+  const setAsCoverImage = (index: number) => {
+    if (!editing || index === 0) return;
+    const newImages = [...(editing.images || [])];
+    const [selectedImage] = newImages.splice(index, 1);
+    newImages.unshift(selectedImage);
+    setEditing({ ...editing, images: newImages });
+  };
+
   const handleDelete = async () => {
     try {
       if (isBulkDeleting) {
@@ -216,6 +273,7 @@ const AdminPacks = () => {
     setSaving(true);
     const slug = editing.slug || editing.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     try {
+      const coverImage = editing.images?.[0] || "/placeholder.svg";
       if (editing.id) {
         await updatePack.mutateAsync({
           id: editing.id,
@@ -225,7 +283,7 @@ const AdminPacks = () => {
             description: editing.description, 
             long_description: editing.long_description, 
             price: editing.price, 
-            image: editing.image, 
+            image: coverImage, 
             active: editing.active, 
             featured: editing.featured,
             name_ar: editing.name_ar,
@@ -235,13 +293,14 @@ const AdminPacks = () => {
             long_description_ar: editing.long_description_ar,
             long_description_en: editing.long_description_en,
           },
+          images: editing.images || [],
           items: editing.items,
         });
         toast({ title: "Pack mis à jour" });
       } else {
         await addPack.mutateAsync({
           name: editing.name, slug, description: editing.description, long_description: editing.long_description,
-          price: editing.price, image: editing.image, active: editing.active, featured: editing.featured,
+          price: editing.price, image: coverImage, images: editing.images || [], active: editing.active, featured: editing.featured,
           items: editing.items,
           name_ar: editing.name_ar,
           name_en: editing.name_en,
@@ -457,85 +516,94 @@ const AdminPacks = () => {
                     </div>
                   </div>
 
-                  {/* Image */}
+                  {/* Images du pack */}
                   <div className="p-4 border border-border rounded-lg bg-muted/20 space-y-4">
                     <h3 className="font-semibold text-xs tracking-wider uppercase text-muted-foreground">
-                      Image du pack
+                      Images du pack
                     </h3>
-                    <div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          setUploading(true);
-                          try {
-                            const compressed = await compressImage(file);
-                            const path = `packs/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-                            const { error } = await supabase.storage.from("product-images").upload(path, compressed, {
-                              contentType: "image/webp",
-                            });
-                            if (error) throw error;
-                            const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-                            setEditing({ ...editing, image: data.publicUrl });
-                            toast({ title: "Image uploadée" });
-                          } catch (err) {
-                            toast({ title: "Erreur", description: "Impossible d'uploader l'image", variant: "destructive" });
-                          } finally {
-                            setUploading(false);
-                            if (fileInputRef.current) fileInputRef.current.value = "";
-                          }
-                        }}
-                      />
-                      {editing.image && editing.image !== "/placeholder.svg" ? (
-                        <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border bg-muted/10 group">
-                          <img 
-                            src={editing.image} 
-                            alt="Aperçu" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              disabled={uploading}
-                              onClick={() => fileInputRef.current?.click()}
-                            >
-                              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                              Changer
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => setEditing({ ...editing, image: "/placeholder.svg" })}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                    <div className="p-4 border border-border border-dashed rounded-lg bg-muted/5">
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        {(editing.images || []).map((img, i) => (
+                          <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border shadow-sm group bg-muted flex flex-col justify-between">
+                            <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover absolute inset-0 z-0" />
+                            
+                            {/* Overlay and controls */}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex flex-col justify-between p-1.5">
+                              <div className="flex justify-between items-center w-full">
+                                {i > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAsCoverImage(i)}
+                                    className="p-1 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                                    title="Définir comme principale"
+                                  >
+                                    <Star className="w-3 h-3 fill-current" />
+                                  </button>
+                                ) : (
+                                  <div className="w-5" />
+                                )}
+                                <button 
+                                  type="button" 
+                                  onClick={() => removeImage(i)}
+                                  className="p-1 bg-destructive text-destructive-foreground rounded hover:bg-destructive/95 transition-colors"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              <div className="flex justify-between w-full">
+                                {i > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => moveImage(i, "left")}
+                                    className="p-1 bg-background text-foreground rounded hover:bg-accent transition-colors"
+                                  >
+                                    <ChevronLeft className="w-3 h-3" />
+                                  </button>
+                                ) : (
+                                  <div className="w-5" />
+                                )}
+                                {i < (editing.images || []).length - 1 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => moveImage(i, "right")}
+                                    className="p-1 bg-background text-foreground rounded hover:bg-accent transition-colors"
+                                  >
+                                    <ChevronRight className="w-3 h-3" />
+                                  </button>
+                                ) : (
+                                  <div className="w-5" />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* "Principale" badge */}
+                            {i === 0 && (
+                              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-primary text-[9px] font-medium text-primary-foreground rounded shadow-sm z-20">
+                                Principale
+                              </span>
+                            )}
                           </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={uploading}
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full h-40 rounded-lg border-2 border-dashed border-border hover:border-primary/50 bg-muted/10 hover:bg-muted/20 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground"
-                        >
-                          {uploading ? (
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                          ) : (
-                            <>
-                              <ImageIcon className="w-8 h-8" />
-                              <span className="text-sm">Cliquez pour ajouter une image</span>
-                            </>
-                          )}
-                        </button>
-                      )}
+                        ))}
+                      </div>
+                      <input 
+                        ref={fileInputRef} 
+                        type="file" 
+                        accept="image/*" 
+                        multiple 
+                        onChange={handleFileUpload} 
+                        className="hidden" 
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full gap-2 border-dashed h-10 text-xs" 
+                        onClick={() => fileInputRef.current?.click()} 
+                        disabled={uploading}
+                      >
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        {uploading ? "Chargement..." : "Ajouter des photos"}
+                      </Button>
                     </div>
                   </div>
 

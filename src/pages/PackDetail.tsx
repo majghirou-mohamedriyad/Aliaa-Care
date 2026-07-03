@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, ShoppingBag, ArrowLeft, MessageSquare, Heart } from "lucide-react";
+import { Package, ShoppingBag, ArrowLeft, MessageSquare, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { usePacks } from "@/hooks/usePacks";
 import { useCart } from "@/hooks/useCart";
@@ -29,8 +29,19 @@ const PackDetail = () => {
   const { t, lang } = useT();
   const [quantity, setQuantity] = useState(1);
   const [selectedPackFlavors, setSelectedPackFlavors] = useState<Record<number, Record<string, string[]>>>({});
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const pack = packs?.find((p) => p.slug === slug && p.active);
+
+  const nextImage = () => {
+    if (!pack || !pack.images) return;
+    setCurrentImageIndex((prev) => (prev === pack.images.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevImage = () => {
+    if (!pack || !pack.images) return;
+    setCurrentImageIndex((prev) => (prev === 0 ? pack.images.length - 1 : prev - 1));
+  };
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { getProductDiscount } = useActivePromotions();
 
@@ -94,7 +105,7 @@ const PackDetail = () => {
         longDescription_ar: pack.long_description_ar || undefined,
         longDescription_en: pack.long_description_en || undefined,
         materials: "",
-        images: [firstImage],
+        images: pack.images && pack.images.length > 0 ? pack.images : [firstImage],
         packItemFlavors: selectedPackFlavors[i] || {},
         items: pack.items,
       } as any);
@@ -124,7 +135,7 @@ const PackDetail = () => {
         longDescription_ar: pack.long_description_ar || undefined,
         longDescription_en: pack.long_description_en || undefined,
         materials: "",
-        images: [firstImage],
+        images: pack.images && pack.images.length > 0 ? pack.images : [firstImage],
         items: pack.items,
       } as any);
       toast({ title: t("productDetail.addedToFavorites"), description: getTranslated(pack, "name", lang) });
@@ -141,9 +152,15 @@ const PackDetail = () => {
 
       <section className="container-wide pb-16 md:pb-24">
         <div className="grid md:grid-cols-2 gap-10 md:gap-16">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-            <div className="aspect-square bg-muted/30 rounded-lg overflow-hidden border border-border">
-              {pack.items.length >= 3 ? (
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="space-y-4">
+            <div className="relative aspect-square overflow-hidden bg-muted/30 rounded-lg border border-border group">
+              {pack.images && pack.images.length > 0 ? (
+                <img 
+                  src={pack.images[currentImageIndex]} 
+                  alt={getTranslated(pack, "name", lang)} 
+                  className="w-full h-full object-cover"
+                />
+              ) : pack.items.length >= 3 ? (
                 <div className="grid grid-cols-2 grid-rows-2 h-full gap-1">
                   {pack.items.slice(0, 4).map((item) => {
                     const itemTranslatedName = getTranslated({ name: item.product_name, name_ar: item.product_name_ar, name_en: item.product_name_en }, "name", lang);
@@ -155,7 +172,35 @@ const PackDetail = () => {
               ) : (
                 <img src={firstImage} alt={getTranslated(pack, "name", lang)} className="w-full h-full object-cover" />
               )}
+
+              {pack.images && pack.images.length > 1 && (
+                <>
+                  <button onClick={prevImage} className="absolute start-5 top-1/2 -translate-y-1/2 p-3 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
+                    <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+                  </button>
+                  <button onClick={nextImage} className="absolute end-5 top-1/2 -translate-y-1/2 p-3 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
+                    <ChevronRight className="w-5 h-5 rtl:rotate-180" />
+                  </button>
+                </>
+              )}
             </div>
+
+            {pack.images && pack.images.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {pack.images.map((image, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={cn(
+                      "w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg transition-all duration-300",
+                      index === currentImageIndex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    <img src={image} alt={`${getTranslated(pack, "name", lang)} ${index + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="flex flex-col justify-center">
