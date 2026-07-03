@@ -130,7 +130,7 @@ export const ProductCard = ({ product, index = 0, variant = "default" }: Product
             <h3 className="font-serif text-xl text-foreground group-hover:text-primary transition-colors leading-snug">{getTranslated(product, "name", lang)}</h3>
           </div>
           
-          <p className="text-sm text-muted-foreground/80 leading-relaxed italic">
+          <p className="text-sm text-muted-foreground/80 leading-relaxed italic line-clamp-2 h-10">
             {getTranslated(product, "description", lang)}
           </p>
           
@@ -170,13 +170,13 @@ export const ProductCard = ({ product, index = 0, variant = "default" }: Product
               size="sm"
               disabled={product.stock === 0}
               className={cn(
-                "rounded-none text-[10px] tracking-[0.1em] uppercase px-5 h-10 transition-all duration-300",
+                "rounded-none text-[10px] tracking-[0.1em] uppercase px-3 sm:px-5 h-10 transition-all duration-300",
                 product.stock === 0 ? "bg-muted text-muted-foreground" : "bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg translate-y-0 hover:-translate-y-0.5"
               )}
               onClick={handleAddToCart}
             >
-              <ShoppingBag className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" />
-              {product.stock === 0 ? t("common.outOfStockShort") : t("common.add")}
+              <ShoppingBag className="w-3.5 h-3.5 sm:ltr:mr-2 sm:rtl:ml-2" />
+              <span className="hidden sm:inline">{product.stock === 0 ? t("common.outOfStockShort") : t("common.add")}</span>
             </Button>
           </div>
         </div>

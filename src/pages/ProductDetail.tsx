@@ -426,7 +426,7 @@ const ProductDetail = () => {
                 {t("common.viewAll")} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 md:gap-10">
               {relatedProducts.map((p, index) => <ProductCard key={p.id} product={p} index={index} />)}
             </div>
           </div>

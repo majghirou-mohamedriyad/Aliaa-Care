@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, Heart } from "lucide-react";
+import { Package, Heart, ShoppingBag } from "lucide-react";
 import { DbPack } from "@/hooks/usePacks";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
@@ -166,10 +166,10 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
           {getTranslated(pack, "name", lang)}
         </h3>
 
-        <p className="text-sm text-muted-foreground line-clamp-2">{getTranslated(pack, "description", lang)}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 h-10">{getTranslated(pack, "description", lang)}</p>
 
         <div className="flex flex-wrap gap-1.5">
-          {pack.items.map((item) => {
+          {pack.items.slice(0, 2).map((item) => {
             const itemTranslatedName = getTranslated({ name: item.product_name, name_ar: item.product_name_ar, name_en: item.product_name_en }, "name", lang);
             return (
               <span key={item.id} className="text-[11px] px-2 py-1 bg-muted rounded-sm text-muted-foreground">
@@ -177,6 +177,11 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
               </span>
             );
           })}
+          {pack.items.length > 2 && (
+            <span className="text-[11px] px-2 py-1 bg-muted rounded-sm text-muted-foreground">
+              {lang === "ar" ? "...أخرى" : lang === "en" ? "Other..." : "Autre ..."}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center justify-between pt-2">
@@ -205,10 +210,11 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
           </div>
           <Button
             size="sm"
-            className="rounded-none text-xs tracking-[0.1em] uppercase"
+            className="rounded-none text-xs tracking-[0.1em] uppercase px-4 sm:px-5 h-10"
             onClick={handleAddToCart}
           >
-            {t("common.add")}
+            <ShoppingBag className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" />
+            <span>{t("common.add")}</span>
           </Button>
         </div>
       </div>

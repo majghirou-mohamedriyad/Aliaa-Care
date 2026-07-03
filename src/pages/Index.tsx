@@ -87,7 +87,7 @@ const Index = () => {
               {t("common.viewAll")}<ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 md:gap-10">
             {latestProducts.map((product, index) => <ProductCard key={product.id} product={product} index={index} />)}
           </div>
           <div className="mt-14 text-center md:hidden">
