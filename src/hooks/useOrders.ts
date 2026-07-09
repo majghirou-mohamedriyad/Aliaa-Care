@@ -146,14 +146,32 @@ export function useAddOrder() {
       items: { product_id?: string; product_name: string; quantity: number; unit_price: number; cost_price: number; selected_flavors?: string[]; selected_weight?: number }[];
     }) => {
       const { items, ...order } = input;
-      const { data, error } = await supabase.from("orders").insert({ ...order, status: 'pending' }).select().single();
-      if (error) throw error;
-      if (items.length > 0) {
-        await supabase.from("order_items").insert(
-          items.map((i) => ({ ...i, order_id: data.id }))
-        );
+      
+      // Generate a client-side UUID for the order id to avoid select().single() RLS issues
+      const orderId = crypto.randomUUID();
+      
+      const { error: orderError } = await supabase
+        .from("orders")
+        .insert({ id: orderId, ...order, status: 'pending' });
+        
+      if (orderError) {
+        console.error("Error inserting order:", orderError);
+        throw orderError;
       }
-      return data;
+      
+      if (items.length > 0) {
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(
+            items.map((i) => ({ ...i, order_id: orderId }))
+          );
+        if (itemsError) {
+          console.error("Error inserting order items:", itemsError);
+          throw itemsError;
+        }
+      }
+      
+      return { id: orderId, ...order, status: 'pending' };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });

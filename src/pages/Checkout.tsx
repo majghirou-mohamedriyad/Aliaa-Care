@@ -203,6 +203,7 @@ const Checkout = () => {
 
     setIsSubmitting(true);
     try {
+      const customerName = `${formData.firstName} ${formData.lastName}`.trim();
       const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
       const fullPhone = formData.phone;
       await addOrder.mutateAsync({
@@ -276,7 +277,8 @@ const Checkout = () => {
 
       clearCart();
       navigate("/");
-    } catch {
+    } catch (error) {
+      console.error("Order submission failed:", error);
       toast({ title: t("checkout.orderError"), description: t("checkout.orderErrorDesc"), variant: "destructive" });
     } finally {
       setIsSubmitting(false);
