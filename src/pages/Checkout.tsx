@@ -17,31 +17,7 @@ import { cn } from "@/lib/utils";
 import { getTranslated } from "@/utils/translationUtils";
 import { useBanner } from "@/hooks/useBanner";
 
-// Helper to convert alpha2Code to flag emoji
-function getFlagEmoji(countryCode: string) {
-  const codePoints = countryCode
-    .toUpperCase()
-    .split("")
-    .map(char => 127397 + char.charCodeAt(0));
-  try {
-    return String.fromCodePoint(...codePoints);
-  } catch {
-    return "";
-  }
-}
 
-const defaultCountryCodes = [
-  { name: "Morocco", code: "212", flag: "MA" },
-  { name: "France", code: "33", flag: "FR" },
-  { name: "Spain", code: "34", flag: "ES" },
-  { name: "Senegal", code: "221", flag: "SN" },
-  { name: "Belgium", code: "32", flag: "BE" },
-  { name: "Switzerland", code: "41", flag: "CH" },
-  { name: "Canada", code: "1", flag: "CA" },
-  { name: "United States", code: "1", flag: "US" },
-  { name: "United Arab Emirates", code: "971", flag: "AE" },
-  { name: "Saudi Arabia", code: "966", flag: "SA" }
-];
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -64,38 +40,6 @@ const Checkout = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [countryCodes, setCountryCodes] = useState(defaultCountryCodes);
-  const [selectedDialCode, setSelectedDialCode] = useState("212");
-
-  useEffect(() => {
-    const fetchCountryCodes = async () => {
-      try {
-        const response = await fetch("https://api.countrylayer.com/v2/all?access_key=be0008e9900d6002169d47d249ef8387");
-        if (!response.ok) throw new Error("API error");
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          const parsed = data
-            .filter((c: any) => c.callingCodes && c.callingCodes[0] && c.name && c.alpha2Code)
-            .map((c: any) => ({
-              name: c.name,
-              code: c.callingCodes[0].replace(/\s+/g, ""),
-              flag: c.alpha2Code
-            }));
-
-          // Deduplicate by name and sort
-          const unique: Record<string, typeof parsed[0]> = {};
-          parsed.forEach((item: any) => {
-            unique[item.name] = item;
-          });
-          const sorted = Object.values(unique).sort((a: any, b: any) => a.name.localeCompare(b.name));
-          setCountryCodes(sorted);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch country codes from API, using local fallback:", err);
-      }
-    };
-    fetchCountryCodes();
-  }, []);
 
   const subtotal = getSubtotal();
 
@@ -164,9 +108,9 @@ const Checkout = () => {
     const name = e.target.name;
     let value = e.target.value;
 
-    // Filter phone number to only accept digits and limit to 9 characters
+    // Filter phone number to only accept digits and limit to 10 characters
     if (name === "phone") {
-      value = value.replace(/\D/g, "").slice(0, 9);
+      value = value.replace(/\D/g, "").slice(0, 10);
     }
 
     setFormData((prev) => {
@@ -232,6 +176,16 @@ const Checkout = () => {
       return;
     }
 
+    // Validate phone number length (must be 10 digits)
+    if (formData.phone.length !== 10) {
+      toast({
+        title: t("checkout.orderError"),
+        description: t("checkout.phoneInvalid"),
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Email validation (only if provided)
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -250,8 +204,7 @@ const Checkout = () => {
     setIsSubmitting(true);
     try {
       const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
-      const customerName = `${formData.firstName} ${formData.lastName}`;
-      const fullPhone = `+${selectedDialCode}${formData.phone}`;
+      const fullPhone = formData.phone;
       await addOrder.mutateAsync({
         order_number: orderNumber,
         total,
@@ -284,7 +237,7 @@ const Checkout = () => {
 
       // Send WhatsApp notification
       try {
-        const fullPhone = `+${selectedDialCode}${formData.phone}`;
+        const fullPhone = formData.phone;
         await sendOrderWhatsAppNotification(
           {
             order_number: orderNumber,
@@ -373,20 +326,7 @@ const Checkout = () => {
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-xs font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-2">{t("checkout.phone")} *</label>
-                      <div className="flex gap-2">
-                        <select
-                          value={selectedDialCode}
-                          onChange={(e) => setSelectedDialCode(e.target.value)}
-                          className="bg-background border border-border px-3 h-12 text-sm focus:outline-none focus:ring-1 focus:ring-primary appearance-none cursor-pointer w-28 shrink-0 rounded-none"
-                        >
-                          {countryCodes.map((c) => (
-                            <option key={`${c.name}-${c.code}`} value={c.code}>
-                              {getFlagEmoji(c.flag)} +{c.code}
-                            </option>
-                          ))}
-                        </select>
-                        <Input id="phone" name="phone" type="tel" inputMode="numeric" value={formData.phone} onChange={handleInputChange} required maxLength={9} className="rounded-none h-12 flex-1" placeholder="612345678" autoComplete="tel" />
-                      </div>
+                      <Input id="phone" name="phone" type="tel" inputMode="numeric" value={formData.phone} onChange={handleInputChange} required maxLength={10} className="rounded-none h-12 w-full" placeholder="0612345678" autoComplete="tel" />
                     </div>
                   </div>
                 </div>
