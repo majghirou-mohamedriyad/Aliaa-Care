@@ -239,6 +239,25 @@ const Checkout = () => {
       // Send WhatsApp notification
       try {
         const fullPhone = formData.phone;
+        const mappedItems = items.map((i) => {
+          let price = i.product.price;
+          if (i.selectedWeight && (i.product as any).weight_prices) {
+            const wp = (i.product as any).weight_prices.find((w: any) => String(w.weight) === String(i.selectedWeight));
+            if (wp) {
+              price = wp.price;
+            }
+          }
+          return {
+            product_name: i.product.name,
+            quantity: i.quantity,
+            unit_price: price,
+            selected_flavors: i.selectedFlavors || [],
+            pack_item_flavors: i.packItemFlavors || {},
+            selected_weight: i.selectedWeight,
+          };
+        });
+
+        // 1. Send to the customer
         await sendOrderWhatsAppNotification(
           {
             order_number: orderNumber,
@@ -247,25 +266,26 @@ const Checkout = () => {
             phone: fullPhone,
             address: formData.address,
           },
-          items.map((i) => {
-            let price = i.product.price;
-            if (i.selectedWeight && (i.product as any).weight_prices) {
-              const wp = (i.product as any).weight_prices.find((w: any) => String(w.weight) === String(i.selectedWeight));
-              if (wp) {
-                price = wp.price;
-              }
-            }
-            return {
-              product_name: i.product.name,
-              quantity: i.quantity,
-              unit_price: price,
-              selected_flavors: i.selectedFlavors || [],
-              pack_item_flavors: i.packItemFlavors || {},
-              selected_weight: i.selectedWeight,
-            };
-          }),
+          mappedItems,
           lang // Pass the current language
         );
+
+        // 2. Send copy to admin (212699928463)
+        try {
+          await sendOrderWhatsAppNotification(
+            {
+              order_number: orderNumber,
+              total,
+              customerName: `${customerName} (Admin Copy)`,
+              phone: "212699928463",
+              address: formData.address,
+            },
+            mappedItems,
+            lang
+          );
+        } catch (adminWaError) {
+          console.error("Failed to send Admin WhatsApp notification:", adminWaError);
+        }
       } catch (waError) {
         console.error("Failed to send WhatsApp notification:", waError);
       }
