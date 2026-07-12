@@ -302,6 +302,7 @@ const AdminOrders = () => {
                 <th className="text-left p-4 font-medium">N° Commande</th>
                 <th className="text-left p-4 font-medium">Client</th>
                 <th className="text-left p-4 font-medium">Date</th>
+                <th className="text-left p-4 font-medium">Heure</th>
                 <th className="text-right p-4 font-medium">Total</th>
                 <th className="text-center p-4 font-medium">Statut</th>
                 <th className="text-right p-4 font-medium">Actions</th>
@@ -328,8 +329,11 @@ const AdminOrders = () => {
                         <span className="text-xs text-muted-foreground">{order.customer_phone}</span>
                       </div>
                     </td>
-                    <td className="p-4 text-muted-foreground">
+                    <td className="p-4 text-muted-foreground text-nowrap">
                       {format(new Date(order.created_at), "dd MMM yyyy", { locale: fr })}
+                    </td>
+                    <td className="p-4 text-muted-foreground">
+                      {format(new Date(order.created_at), "HH:mm")}
                     </td>
                     <td className="p-4 text-right font-medium">{order.total.toLocaleString()} DH</td>
                     <td className="p-4">
