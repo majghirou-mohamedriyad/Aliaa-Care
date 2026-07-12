@@ -235,6 +235,45 @@ const Checkout = () => {
           };
         }),
       });
+      
+      // Envoi des données vers Google Sheets si l'URL est configurée dans le fichier .env
+      const googleSheetUrl = import.meta.env.VITE_GOOGLE_SHEET_URL;
+      if (googleSheetUrl) {
+        try {
+          const orderItemsDetails = items.map((i) => {
+            let price = i.product.price;
+            if (i.selectedWeight && (i.product as any).weight_prices) {
+              const wp = (i.product as any).weight_prices.find((w: any) => String(w.weight) === String(i.selectedWeight));
+              if (wp) price = wp.price;
+            }
+            const weightText = i.selectedWeight ? ` [${i.selectedWeight}]` : "";
+            const flavorText = i.selectedFlavors && i.selectedFlavors.length > 0 ? ` (${i.selectedFlavors.join(", ")})` : "";
+            return `${i.product.name}${weightText}${flavorText} x${i.quantity} (${price} DH)`;
+          }).join(" | ");
+
+          await fetch(googleSheetUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              order_number: orderNumber,
+              date: new Date().toLocaleString("fr-FR"),
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              phone: fullPhone,
+              address: formData.address,
+              city: formData.city,
+              notes: formData.notes,
+              items: orderItemsDetails,
+              total: `${total} DH`
+            })
+          });
+        } catch (sheetErr) {
+          console.error("Erreur lors de l'envoi vers Google Sheets:", sheetErr);
+        }
+      }
 
       // Send WhatsApp notification
       try {
