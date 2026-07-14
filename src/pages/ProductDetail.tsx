@@ -16,6 +16,7 @@ import { useT } from "@/hooks/useT";
 import { useBanner } from "@/hooks/useBanner";
 import { cn } from "@/lib/utils";
 import { getTranslated } from "@/utils/translationUtils";
+import { SEOManager } from "@/seo/components/SEOManager";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -113,8 +114,46 @@ const ProductDetail = () => {
     setZoomPos({ x, y });
   };
 
+  const productName = getTranslated(product, "name", lang);
+  const productDescription = getTranslated(product, "description", lang) || product.description;
+  const productPrice = getBasePrice();
+  const discountedPrice = getProductDiscount(product, productPrice);
+  const finalPrice = discountedPrice || productPrice;
+  const isAvailable = product.stock > 0;
+
   return (
     <>
+      <SEOManager
+        type="product"
+        title={productName}
+        description={productDescription}
+        ogImage={product.images?.[0]}
+        breadcrumbItems={[
+          { name: "Accueil", item: "/" },
+          { name: "Produits", item: "/products" },
+          { name: productName, item: `/product/${product.slug}` },
+        ]}
+        productData={{
+          name: productName,
+          description: productDescription,
+          sku: product.id,
+          category: collection ? getTranslated(collection, "name", lang) : undefined,
+          images: product.images,
+          price: finalPrice,
+          priceCurrency: "MAD",
+          availability: isAvailable ? "InStock" : "OutOfStock",
+          shippingDetails: {
+            price: finalPrice >= freeShippingThreshold ? 0 : 40,
+            currency: "MAD",
+            deliveryTimeDays: 3,
+          },
+          merchantReturnPolicy: {
+            returnPolicyCategory: "MerchantReturnFiniteReturnPeriod",
+            merchantReturnDays: 14,
+            returnFees: "ReturnFeesCustomerPaying",
+          },
+        }}
+      />
       <div className="container-full py-6 border-b border-border">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Link to="/products" className="hover:text-foreground transition-colors">{t("common.shop")}</Link>

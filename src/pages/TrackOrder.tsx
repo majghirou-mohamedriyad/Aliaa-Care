@@ -29,6 +29,8 @@ const locales = {
   ar: arMA,
 };
 
+import { SEOManager } from "@/seo/components/SEOManager";
+
 const TrackOrder = () => {
   const [orderNumber, setOrderNumber] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -43,6 +45,9 @@ const TrackOrder = () => {
     delivered: { label: t("status.delivered"), color: "text-green-600 bg-green-50", icon: CheckCircle },
     cancelled: { label: t("status.cancelled"), color: "text-red-600 bg-red-50", icon: XCircle },
   };
+
+  const pageTitle = t("common.trackOrder") || "Suivre ma commande";
+  const pageDesc = "Suivez l'état de votre commande en temps réel en saisissant votre numéro de commande.";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +66,14 @@ const TrackOrder = () => {
 
   return (
     <>
+      <SEOManager
+        title={pageTitle}
+        description={pageDesc}
+        breadcrumbItems={[
+          { name: "Accueil", item: "/" },
+          { name: pageTitle, item: "/track-order" },
+        ]}
+      />
       <section className="py-20 md:py-32 relative overflow-hidden">
         {/* Background Decorative Elements */}
         <div className="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none">

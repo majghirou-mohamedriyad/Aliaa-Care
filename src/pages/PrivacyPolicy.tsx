@@ -45,6 +45,8 @@ const CONTENT = {
   }
 };
 
+import { SEOManager } from "@/seo/components/SEOManager";
+
 export default function PrivacyPolicy() {
   const { language } = useLanguage();
   const lang = (language === "ar" || language === "en" || language === "fr") ? language : "fr";
@@ -52,8 +54,17 @@ export default function PrivacyPolicy() {
   const isRtl = language === "ar";
 
   return (
-    <div className="min-h-screen bg-[#FBF9F6] pt-24 pb-16 px-4" dir={isRtl ? "rtl" : "ltr"}>
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-[#EAE6DF]">
+    <>
+      <SEOManager
+        title={t.title}
+        description={t.intro}
+        breadcrumbItems={[
+          { name: "Accueil", item: "/" },
+          { name: t.title, item: "/privacy-policy" },
+        ]}
+      />
+      <div className="min-h-screen bg-[#FBF9F6] pt-24 pb-16 px-4" dir={isRtl ? "rtl" : "ltr"}>
+        <div className="max-w-3xl mx-auto bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-[#EAE6DF]">
         <h1 className="font-serif text-3xl md:text-4xl text-[#365836] mb-2">
           {t.title}
         </h1>
@@ -109,5 +120,6 @@ export default function PrivacyPolicy() {
         </div>
       </div>
     </div>
+    </>
   );
 }

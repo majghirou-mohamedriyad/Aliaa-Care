@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Product } from "@/data/products";
 import { useActivePromotions } from "@/hooks/usePromotions";
 import { getTranslated } from "@/utils/translationUtils";
+import { SEOManager } from "@/seo/components/SEOManager";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -142,8 +143,42 @@ const PackDetail = () => {
     }
   };
 
+  const packName = getTranslated(pack, "name", lang);
+  const packDescription = getTranslated(pack, "description", lang) || pack.description;
+  const packImages = pack.images && pack.images.length > 0 ? pack.images : [firstImage];
+
   return (
     <>
+      <SEOManager
+        type="pack"
+        title={packName}
+        description={packDescription}
+        ogImage={packImages[0]}
+        breadcrumbItems={[
+          { name: "Accueil", item: "/" },
+          { name: "Packs", item: "/packs" },
+          { name: packName, item: `/pack/${pack.slug}` },
+        ]}
+        productData={{
+          name: packName,
+          description: packDescription,
+          sku: pack.id,
+          images: packImages,
+          price: discountedPrice,
+          priceCurrency: "MAD",
+          availability: "InStock",
+          shippingDetails: {
+            price: discountedPrice >= 500 ? 0 : 40,
+            currency: "MAD",
+            deliveryTimeDays: 3,
+          },
+          merchantReturnPolicy: {
+            returnPolicyCategory: "MerchantReturnFiniteReturnPeriod",
+            merchantReturnDays: 14,
+            returnFees: "ReturnFeesCustomerPaying",
+          },
+        }}
+      />
       <div className="container-wide pt-6 pb-2">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" />{t("pack.backHome")}

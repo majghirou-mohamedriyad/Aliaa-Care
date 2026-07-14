@@ -4,14 +4,36 @@ import { Gift } from "lucide-react";
 import { usePacks } from "@/hooks/usePacks";
 import { PackCard } from "@/components/PackCard";
 import { useT } from "@/hooks/useT";
+import { SEOManager } from "@/seo/components/SEOManager";
 
 const Packs = () => {
   const { data: allPacks = [], isLoading } = usePacks();
   const { t } = useT();
   const activePacks = allPacks.filter((p) => p.active);
 
+  const pageTitle = t("common.ourPacks") || "Nos Packs";
+  const pageDesc = t("index.featuredDesc") || "Découvrez nos coffrets et packs bien-être naturels.";
+
   return (
     <>
+      <SEOManager
+        type="collection"
+        title={pageTitle}
+        description={pageDesc}
+        breadcrumbItems={[
+          { name: "Accueil", item: "/" },
+          { name: pageTitle, item: "/packs" },
+        ]}
+        itemListData={{
+          name: pageTitle,
+          items: activePacks.map((p) => ({
+            name: p.name,
+            url: `/pack/${p.slug}`,
+            image: p.image,
+            price: p.price,
+          })),
+        }}
+      />
       <section className="py-16 md:py-24">
         <div className="container-full">
           <motion.div

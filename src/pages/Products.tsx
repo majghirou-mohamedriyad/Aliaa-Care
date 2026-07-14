@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import chayNifasImg from "@/assets/chay-nifas.jpeg";
 import { getTranslated } from "@/utils/translationUtils";
+import { SEOManager } from "@/seo/components/SEOManager";
 
 type SortOption = "featured" | "newest" | "price-asc" | "price-desc" | "name-asc";
 
@@ -77,8 +78,37 @@ const Products = () => {
     setSearchParams(p);
   };
 
+  const pageTitle = currentCollection ? getTranslated(currentCollection, "name", lang) : t("common.products");
+  const pageDesc = currentCollection ? getTranslated(currentCollection, "description", lang) : "Découvrez nos soins et infusions naturels.";
+
   return (
     <>
+      <SEOManager
+        type="collection"
+        title={pageTitle}
+        description={pageDesc}
+        breadcrumbItems={[
+          { name: "Accueil", item: "/" },
+          { name: pageTitle, item: "/products" },
+        ]}
+        collectionData={
+          currentCollection
+            ? {
+                name: getTranslated(currentCollection, "name", lang),
+                description: getTranslated(currentCollection, "description", lang),
+              }
+            : undefined
+        }
+        itemListData={{
+          name: pageTitle,
+          items: filteredAndSortedProducts.map((p) => ({
+            name: p.name,
+            url: `/product/${p.slug}`,
+            image: p.images?.[0],
+            price: p.price,
+          })),
+        }}
+      />
       <section className="relative h-[40vh] md:h-[55vh] overflow-hidden">
         <div className="absolute inset-0">
           <img src={currentCollection?.heroImage || chayNifasImg} alt={getTranslated(currentCollection as any, "name", lang) || t("common.products")}

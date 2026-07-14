@@ -11,6 +11,7 @@ import { AdminGuard } from "./components/auth/AdminGuard";
 import { GuestGuard } from "./components/auth/GuestGuard";
 import { ClientLayout } from "./components/layout/ClientLayout";
 import { AdminLayout } from "./components/layout/AdminLayout";
+import { SEOProvider } from "./seo/provider/SEOProvider";
 
 import { lazy, Suspense } from "react";
 
@@ -143,48 +144,50 @@ const App = () => (
           <HostnameRedirect />
           <ScrollToTop />
           <LanguageSelector />
-          <Suspense fallback={
-            <div className="flex items-center justify-center min-h-screen">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          }>
-            <Routes>
-              {/* Client Routes */}
-              <Route path="/" element={<ClientGuard><ClientLayout /></ClientGuard>}>
-                <Route index element={<Index />} />
-                <Route path="products" element={<Products />} />
-                <Route path="product/:slug" element={<ProductDetail />} />
-                <Route path="about" element={<About />} />
-                <Route path="cart" element={<Cart />} />
-                <Route path="checkout" element={<Checkout />} />
-                <Route path="wishlist" element={<Wishlist />} />
-                <Route path="packs" element={<Packs />} />
-                <Route path="pack/:slug" element={<PackDetail />} />
-                <Route path="track-order" element={<TrackOrder />} />
-                <Route path="privacy-policy" element={<PrivacyPolicy />} />
-              </Route>
+          <SEOProvider>
+            <Suspense fallback={
+              <div className="flex items-center justify-center min-h-screen">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            }>
+              <Routes>
+                {/* Client Routes */}
+                <Route path="/" element={<ClientGuard><ClientLayout /></ClientGuard>}>
+                  <Route index element={<Index />} />
+                  <Route path="products" element={<Products />} />
+                  <Route path="product/:slug" element={<ProductDetail />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="cart" element={<Cart />} />
+                  <Route path="checkout" element={<Checkout />} />
+                  <Route path="wishlist" element={<Wishlist />} />
+                  <Route path="packs" element={<Packs />} />
+                  <Route path="pack/:slug" element={<PackDetail />} />
+                  <Route path="track-order" element={<TrackOrder />} />
+                  <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                </Route>
 
-              {/* Auth Routes */}
-              <Route path="/auth/login" element={<GuestGuard><Login /></GuestGuard>} />
+                {/* Auth Routes */}
+                <Route path="/auth/login" element={<GuestGuard><Login /></GuestGuard>} />
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="finances" element={<AdminFinances />} />
-                <Route path="categories" element={<AdminCategories />} />
-                <Route path="packs" element={<AdminPacks />} />
-                <Route path="promo-codes" element={<AdminPromoCodes />} />
-                <Route path="packaging" element={<AdminPackaging />} />
-                <Route path="promotions" element={<AdminPromotions />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="settings" element={<AdminSettings />} />
-              </Route>
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="finances" element={<AdminFinances />} />
+                  <Route path="categories" element={<AdminCategories />} />
+                  <Route path="packs" element={<AdminPacks />} />
+                  <Route path="promo-codes" element={<AdminPromoCodes />} />
+                  <Route path="packaging" element={<AdminPackaging />} />
+                  <Route path="promotions" element={<AdminPromotions />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+                {/* Fallback */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </SEOProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

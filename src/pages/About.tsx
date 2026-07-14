@@ -12,6 +12,8 @@ import chayNifasImg from "@/assets/about-pic2.png";
 import coffretArganImg from "@/assets/about-pic3.png";
 import selsBainImg from "@/assets/about-pic4.png";
 
+import { SEOManager } from "@/seo/components/SEOManager";
+
 const About = () => {
   const { t } = useT();
   const { language } = useLanguage();
@@ -23,8 +25,19 @@ const About = () => {
     { value: "0%", label: t("about.statAdditives") },
   ];
 
+  const pageTitle = t("common.ourStory") || "Notre Histoire";
+  const pageDesc = t("about.heroDesc") || "Découvrez notre histoire et notre engagement pour le bien-être naturel féminin.";
+
   return (
     <>
+      <SEOManager
+        title={pageTitle}
+        description={pageDesc}
+        breadcrumbItems={[
+          { name: "Accueil", item: "/" },
+          { name: pageTitle, item: "/about" },
+        ]}
+      />
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative h-[calc(100dvh-6rem)] md:h-[calc(100vh-7rem)] overflow-hidden">
         <div className="absolute inset-0">

@@ -17,6 +17,8 @@ import gommageCorpsImg from "@/assets/gommage-corps.jpeg";
 import eauDeRoseImg from "@/assets/eau-de-rose.jpeg";
 import { getTranslated } from "@/utils/translationUtils";
 
+import { SEOManager } from "@/seo/components/SEOManager";
+
 const Index = () => {
   const { products, collections, banner } = useClientProducts();
   const { data: allPacks = [] } = usePacks();
@@ -37,6 +39,10 @@ const Index = () => {
 
   return (
     <>
+      <SEOManager
+        type="home"
+        breadcrumbItems={[{ name: "Accueil", item: "/" }]}
+      />
       {banner.enabled && (
         <div className="bg-primary text-primary-foreground text-center py-2.5 text-sm tracking-wide">{banner.message}</div>
       )}
