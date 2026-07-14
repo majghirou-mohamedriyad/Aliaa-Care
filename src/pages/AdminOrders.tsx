@@ -206,31 +206,10 @@ const AdminOrders = () => {
       toast({ title: "Enquête envoyée ✅", description: "La demande d'évaluation a été envoyée avec succès sur WhatsApp." });
     } catch (waError: any) {
       console.error("Failed to send feedback request:", waError);
-      
-      // Fallback manually via WhatsApp link
-      let phone = order.customer_phone.replace(/\D/g, "");
-      if (phone.startsWith("0")) phone = "212" + phone.substring(1);
-      else if (!phone.startsWith("212") && phone.length === 9) phone = "212" + phone;
-      
-      const feedbackUrl = `https://aliaacare.com/feedback/${order.id}`;
-      const message = encodeURIComponent(
-        `*ALIAA Natural Care* 🌿\n\n` +
-        `Bonjour ${order.customer_name},\n\n` +
-        `Merci pour votre confiance ! Votre commande #${order.order_number} a été livrée. 🎉\n\n` +
-        `Pouvez-vous prendre 15 secondes pour évaluer notre service et le(s) produit(s) reçu(s) ?\n` +
-        `Votre avis nous aide énormément : 👇\n` +
-        `${feedbackUrl}`
-      );
-      
       toast({ 
-        title: "API WhatsApp non disponible", 
-        description: "La demande automatique a échoué. Cliquez pour l'envoyer manuellement.",
-        action: (
-          <Button size="sm" onClick={() => window.open(`https://wa.me/${phone}?text=${message}`, "_blank")}>
-            Envoyer Manuel
-          </Button>
-        ),
-        duration: 10000,
+        title: "Échec de l'envoi", 
+        description: "Impossible d'envoyer l'enquête automatiquement via WhatsApp.",
+        variant: "destructive"
       });
     }
   };
