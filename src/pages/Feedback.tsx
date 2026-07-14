@@ -328,12 +328,8 @@ export default function Feedback() {
                   Votre précieux retour a bien été enregistré. Vos avis nous guident au quotidien pour parfaire nos soins naturels et notre service.
                 </p>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-[#FAF6F0] py-2 px-4 rounded-full max-w-xs mx-auto">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    Soumission sécurisée
-                  </div>
                   <Button asChild className="w-full bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white py-2.5 rounded-xl">
-                    <Link to="/">Retour à l'accueil</Link>
+                    <a href="https://aliaacare.com">Retourner au site</a>
                   </Button>
                 </div>
               </motion.div>

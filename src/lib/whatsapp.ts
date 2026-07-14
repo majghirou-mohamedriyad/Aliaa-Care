@@ -117,7 +117,7 @@ export const sendFeedbackWhatsAppRequest = async (
   orderNumber: string,
   language: string = "fr"
 ) => {
-  const feedbackUrl = `${window.location.origin}/feedback/${orderId}`;
+  const feedbackUrl = `https://aliaacare.com/feedback/${orderId}`;
   
   const textFR = `*ALIAA Natural Care* 🌿\n\n` +
     `Bonjour ${customerName},\n\n` +

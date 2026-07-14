@@ -212,7 +212,7 @@ const AdminOrders = () => {
       if (phone.startsWith("0")) phone = "212" + phone.substring(1);
       else if (!phone.startsWith("212") && phone.length === 9) phone = "212" + phone;
       
-      const feedbackUrl = `${window.location.origin}/feedback/${order.id}`;
+      const feedbackUrl = `https://aliaacare.com/feedback/${order.id}`;
       const message = encodeURIComponent(
         `*ALIAA Natural Care* 🌿\n\n` +
         `Bonjour ${order.customer_name},\n\n` +
