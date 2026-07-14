@@ -116,9 +116,6 @@ const ProductDetail = () => {
 
   const productName = getTranslated(product, "name", lang);
   const productDescription = getTranslated(product, "description", lang) || product.description;
-  const productPrice = getBasePrice();
-  const discountedPrice = getProductDiscount(product, productPrice);
-  const finalPrice = discountedPrice || productPrice;
   const isAvailable = product.stock > 0;
 
   return (
@@ -139,11 +136,11 @@ const ProductDetail = () => {
           sku: product.id,
           category: collection ? getTranslated(collection, "name", lang) : undefined,
           images: product.images,
-          price: finalPrice,
+          price: discountedPrice,
           priceCurrency: "MAD",
           availability: isAvailable ? "InStock" : "OutOfStock",
           shippingDetails: {
-            price: finalPrice >= freeShippingThreshold ? 0 : 40,
+            price: discountedPrice >= freeShippingThreshold ? 0 : 40,
             currency: "MAD",
             deliveryTimeDays: 3,
           },
