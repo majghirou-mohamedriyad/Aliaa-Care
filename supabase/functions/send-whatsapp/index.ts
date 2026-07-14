@@ -46,9 +46,11 @@ serve(async (req) => {
     };
 
     if (hasButtons) {
-      payload.name = message; // Dans un sondage, le texte principal est le 'name'
-      payload.options = buttons.map((b: any) => b.text);
-      payload.multipleAnswers = false;
+      payload.poll = {
+        name: message, // Dans un sondage, le texte principal est le 'name'
+        options: buttons.map((b: any) => b.text),
+        multipleAnswers: false
+      };
     } else {
       payload.text = message;
     }
