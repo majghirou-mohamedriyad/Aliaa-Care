@@ -29,6 +29,7 @@ const Packs = lazy(() => import("./pages/Packs"));
 const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Feedback = lazy(() => import("./pages/Feedback"));
 
 // Auth Pages
 const Login = lazy(() => import("./pages/Auth/Login"));
@@ -44,6 +45,7 @@ const AdminPackaging = lazy(() => import("./pages/AdminPackaging"));
 const AdminPromotions = lazy(() => import("./pages/AdminPromotions"));
 const AdminOrders = lazy(() => import("./pages/AdminOrders"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminFeedbacks = lazy(() => import("./pages/AdminFeedbacks"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -166,6 +168,8 @@ const App = () => (
                   <Route path="privacy-policy" element={<PrivacyPolicy />} />
                 </Route>
 
+                <Route path="/feedback/:orderId" element={<Feedback />} />
+
                 {/* Auth Routes */}
                 <Route path="/auth/login" element={<GuestGuard><Login /></GuestGuard>} />
 
@@ -181,6 +185,7 @@ const App = () => (
                   <Route path="promotions" element={<AdminPromotions />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="settings" element={<AdminSettings />} />
+                  <Route path="feedbacks" element={<AdminFeedbacks />} />
                 </Route>
 
                 {/* Fallback */}

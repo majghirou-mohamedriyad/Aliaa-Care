@@ -94,9 +94,9 @@ const Products = () => {
         collectionData={
           currentCollection
             ? {
-                name: getTranslated(currentCollection, "name", lang),
-                description: getTranslated(currentCollection, "description", lang),
-              }
+              name: getTranslated(currentCollection, "name", lang),
+              description: getTranslated(currentCollection, "description", lang),
+            }
             : undefined
         }
         itemListData={{

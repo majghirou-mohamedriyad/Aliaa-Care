@@ -110,3 +110,40 @@ export const sendOrderWhatsAppNotification = async (
   if (error) throw error;
   return data;
 };
+
+export const sendFeedbackWhatsAppRequest = async (
+  orderId: string,
+  customerPhone: string,
+  customerName: string,
+  orderNumber: string,
+  language: string = "fr"
+) => {
+  const feedbackUrl = `${window.location.origin}/feedback/${orderId}`;
+  
+  const textFR = `*ALIAA Natural Care* 🌿\n\n` +
+    `Bonjour ${customerName},\n\n` +
+    `Merci pour votre confiance ! Votre commande *#${orderNumber}* a été livrée. 🎉\n\n` +
+    `Pouvez-vous prendre 15 secondes pour évaluer notre service et le(s) produit(s) reçu(s) ?\n` +
+    `Votre avis nous aide énormément : 👇\n` +
+    `${feedbackUrl}`;
+
+  const textAR = `*ALIAA Natural Care* 🌿\n\n` +
+    `مرحباً ${customerName}،\n\n` +
+    `شكراً لثقتكم بنا! تم توصيل طلبكم *#${orderNumber}*. 🎉\n\n` +
+    `هل يمكنك تخصيص 15 ثانية لتقييم خدماتنا والمنتجات التي استلمتها؟\n` +
+    `رأيك يهمنا كثيراً: 👇\n` +
+    `${feedbackUrl}`;
+
+  const message = language === "ar" ? textAR : textFR;
+
+  const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+    body: { 
+      phone: customerPhone,
+      message: message
+    },
+  });
+
+  if (error) throw error;
+  return { data, feedbackUrl, message };
+};
+

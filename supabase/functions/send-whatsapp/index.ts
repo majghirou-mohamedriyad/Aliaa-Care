@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const WAHA_URL = Deno.env.get("WAHA_URL");
-const WAHA_API_KEY = Deno.env.get("WAHA_API_KEY");
+const WAHA_URL = Deno.env.get("WAHA_URL") || "http://185.197.249.4:3001";
+const WAHA_API_KEY = Deno.env.get("WAHA_API_KEY") || "038e00c4bf9448b2a0fe948ea9b2b141";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

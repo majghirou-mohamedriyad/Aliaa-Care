@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, TrendingUp, ArrowLeft, FolderOpen, Gift, Tag, BoxSelect, Megaphone, ShoppingCart, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, Package, TrendingUp, ArrowLeft, FolderOpen, Gift, Tag, BoxSelect, Megaphone, ShoppingCart, LogOut, Settings, MessageSquare } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -21,6 +21,7 @@ const items = [
   { title: "Packs", url: "/admin/packs", icon: Gift },
   { title: "Promotions", url: "/admin/promotions", icon: Tag },
   { title: "Commandes", url: "/admin/orders", icon: ShoppingCart },
+  { title: "Avis Clients", url: "/admin/feedbacks", icon: MessageSquare },
   { title: "Paramètres", url: "/admin/settings", icon: Settings },
 ];
 

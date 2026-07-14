@@ -32,9 +32,11 @@ import {
   Circle,
   MessageSquare,
   PackagePlus,
-  ArrowUpDown
+  ArrowUpDown,
+  Star
 } from "lucide-react";
 import { generateInvoice } from "@/utils/invoiceGenerator";
+import { sendFeedbackWhatsAppRequest } from "@/lib/whatsapp";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -197,6 +199,42 @@ const AdminOrders = () => {
     window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   };
 
+  const handleSendFeedbackRequest = async (order: DbOrder) => {
+    toast({ title: "Envoi de l'enquête...", description: "Envoi automatique de la demande de feedback sur WhatsApp." });
+    try {
+      await sendFeedbackWhatsAppRequest(order.id, order.customer_phone, order.customer_name, order.order_number);
+      toast({ title: "Enquête envoyée ✅", description: "La demande d'évaluation a été envoyée avec succès sur WhatsApp." });
+    } catch (waError: any) {
+      console.error("Failed to send feedback request:", waError);
+      
+      // Fallback manually via WhatsApp link
+      let phone = order.customer_phone.replace(/\D/g, "");
+      if (phone.startsWith("0")) phone = "212" + phone.substring(1);
+      else if (!phone.startsWith("212") && phone.length === 9) phone = "212" + phone;
+      
+      const feedbackUrl = `${window.location.origin}/feedback/${order.id}`;
+      const message = encodeURIComponent(
+        `*ALIAA Natural Care* 🌿\n\n` +
+        `Bonjour ${order.customer_name},\n\n` +
+        `Merci pour votre confiance ! Votre commande #${order.order_number} a été livrée. 🎉\n\n` +
+        `Pouvez-vous prendre 15 secondes pour évaluer notre service et le(s) produit(s) reçu(s) ?\n` +
+        `Votre avis nous aide énormément : 👇\n` +
+        `${feedbackUrl}`
+      );
+      
+      toast({ 
+        title: "API WhatsApp non disponible", 
+        description: "La demande automatique a échoué. Cliquez pour l'envoyer manuellement.",
+        action: (
+          <Button size="sm" onClick={() => window.open(`https://wa.me/${phone}?text=${message}`, "_blank")}>
+            Envoyer Manuel
+          </Button>
+        ),
+        duration: 10000,
+      });
+    }
+  };
+
   const handleStatusChange = async (orderId: string, newStatus: DbOrder['status']) => {
     const order = orders.find(o => o.id === orderId);
     try {
@@ -206,6 +244,10 @@ const AdminOrders = () => {
         currentHistory: order?.status_history || []
       });
       toast({ title: "Statut mis à jour", description: `La commande est maintenant ${statusConfig[newStatus].label.toLowerCase()}.` });
+
+      if (newStatus === "delivered" && order) {
+        await handleSendFeedbackRequest(order);
+      }
     } catch (error) {
       toast({ title: "Erreur", description: "Impossible de mettre à jour le statut", variant: "destructive" });
     }
@@ -684,6 +726,11 @@ const AdminOrders = () => {
                   <Button variant="outline" className="h-11 px-6 rounded-none gap-2 text-green-600 border-green-200 hover:bg-green-50 shadow-sm" onClick={() => openWhatsApp(selectedOrder)}>
                     <WhatsAppIcon className="w-4 h-4" /> WhatsApp
                   </Button>
+                  {selectedOrder.status === 'delivered' && (
+                    <Button variant="outline" className="h-11 px-6 rounded-none gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 shadow-sm" onClick={() => handleSendFeedbackRequest(selectedOrder)}>
+                      <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> Demander Avis
+                    </Button>
+                  )}
                   <Button variant="outline" className="h-11 px-6 rounded-none gap-2 shadow-sm" onClick={() => generateInvoice(selectedOrder)}>
                     <FileText className="w-4 h-4" /> Facture PDF
                   </Button>
