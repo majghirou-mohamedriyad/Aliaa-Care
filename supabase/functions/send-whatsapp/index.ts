@@ -31,9 +31,9 @@ serve(async (req) => {
     // Clean URL to avoid double slashes
     let baseUrl = WAHA_URL?.endsWith("/") ? WAHA_URL.slice(0, -1) : WAHA_URL;
     
-    // Auto-rewrite public IP to internal Docker service name if running inside VPS
+    // Auto-rewrite public IP to internal Docker bridge gateway if running inside VPS
     if (baseUrl && (baseUrl.includes("185.197.249.4") || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1"))) {
-      baseUrl = "http://waha:3000";
+      baseUrl = "http://172.17.0.1:3001";
     }
     
     // On utilise sendPoll car c'est beaucoup plus compatible que les boutons classiques
