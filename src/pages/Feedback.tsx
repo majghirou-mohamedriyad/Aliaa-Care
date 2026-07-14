@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SEOManager } from "@/seo/components/SEOManager";
+import typoImg from "@/assets/TYPO02 PNG.png";
 
 interface FeedbackItem {
   product_id: string | null;
@@ -172,11 +173,10 @@ export default function Feedback() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[#FBF9F6] rounded-full blur-3xl opacity-70 pointer-events-none -z-10 animate-pulse duration-[8000ms] delay-2000" />
 
         {/* Brand Header */}
-        <header className="mb-8 sm:mb-12 text-center w-full z-10">
-          <Link to="/" className="font-serif text-2xl sm:text-3xl tracking-widest text-[#1A1A1A] font-bold hover:opacity-85 transition-opacity">
-            ALIAA
+        <header className="mb-6 sm:mb-8 text-center w-full z-10 flex flex-col items-center">
+          <Link to="/" className="hover:opacity-80 transition-opacity flex items-center justify-center">
+            <img src={typoImg} alt="ALIAA CARE" className="h-16 sm:h-24 w-auto pointer-events-none" />
           </Link>
-          <p className="text-[10px] sm:text-xs tracking-[0.25em] text-[#C5A28E] uppercase mt-1">Natural Care</p>
         </header>
 
         {/* Main Card Container */}
