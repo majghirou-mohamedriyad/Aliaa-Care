@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const WAHA_URL = Deno.env.get("WAHA_URL") || "http://185.197.249.4:3001";
+const WAHA_URL = Deno.env.get("WAHA_URL") || "http://waha:3000";
 const WAHA_API_KEY = Deno.env.get("WAHA_API_KEY") || "038e00c4bf9448b2a0fe948ea9b2b141";
 
 const corsHeaders = {
@@ -51,6 +51,9 @@ serve(async (req) => {
     console.log(`[WAHA] Sending to: ${fullUrl}`);
     console.log(`[WAHA] Payload: ${JSON.stringify(payload)}`);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
     const response = await fetch(fullUrl, {
       method: "POST",
       headers: { 
@@ -58,7 +61,10 @@ serve(async (req) => {
         "X-Api-Key": WAHA_API_KEY || "" 
       },
       body: JSON.stringify(payload),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     const result = await response.json();
     console.log(`[WAHA] Response status: ${response.status}`);
