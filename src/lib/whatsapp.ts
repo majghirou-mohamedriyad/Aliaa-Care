@@ -103,7 +103,6 @@ export const sendOrderWhatsAppNotification = async (
     body: { 
       phone: order.phone,
       message: message,
-      buttons: buttons
     },
   });
 
