@@ -200,17 +200,11 @@ const AdminOrders = () => {
   };
 
   const handleSendFeedbackRequest = async (order: DbOrder) => {
-    toast({ title: "Envoi de l'enquête...", description: "Envoi automatique de la demande de feedback sur WhatsApp." });
     try {
       await sendFeedbackWhatsAppRequest(order.id, order.customer_phone, order.customer_name, order.order_number);
       toast({ title: "Enquête envoyée ✅", description: "La demande d'évaluation a été envoyée avec succès sur WhatsApp." });
     } catch (waError: any) {
       console.error("Failed to send feedback request:", waError);
-      toast({ 
-        title: "Échec de l'envoi", 
-        description: "Impossible d'envoyer l'enquête automatiquement via WhatsApp.",
-        variant: "destructive"
-      });
     }
   };
 
