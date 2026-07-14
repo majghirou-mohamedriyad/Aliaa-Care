@@ -7,6 +7,7 @@ import { useCart } from "@/hooks/useCart";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useT } from "@/hooks/useT";
+import { MetaManager } from "@/seo/components/MetaManager";
 
 const Wishlist = () => {
   const { items, removeItem, clearWishlist } = useWishlist();
@@ -21,6 +22,7 @@ const Wishlist = () => {
 
   return (
     <>
+      <MetaManager title={t("wishlist.title") || "Favoris"} />
       <div className="container-full py-12 md:py-20">
         <div className="mb-10">
           <h1 className="font-serif text-3xl md:text-4xl text-foreground mb-2">{t("wishlist.title")}</h1>

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { LogIn, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import coffretImg from "@/assets/coffret-aliaa-phone.webp";
+import { MetaManager } from "@/seo/components/MetaManager";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -66,7 +67,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 overflow-hidden">
+    <>
+      <MetaManager title="Connexion" />
+      <div className="min-h-screen grid lg:grid-cols-2 overflow-hidden">
       {/* Visual Side */}
       <div className="hidden lg:block relative">
         <img
@@ -174,6 +177,7 @@ const Login = () => {
         </motion.div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -16,6 +16,7 @@ import livraisonData from "@/data/livraison.json";
 import { cn } from "@/lib/utils";
 import { getTranslated } from "@/utils/translationUtils";
 import { useBanner } from "@/hooks/useBanner";
+import { MetaManager } from "@/seo/components/MetaManager";
 
 
 
@@ -91,6 +92,7 @@ const Checkout = () => {
   if (items.length === 0) {
     return (
       <>
+        <MetaManager title={t("checkout.order") || "Commande"} />
         <div className="container-narrow py-28 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h1 className="font-serif text-4xl mb-4">{t("checkout.noItems")}</h1>
@@ -346,6 +348,7 @@ const Checkout = () => {
 
   return (
     <>
+      <MetaManager title={t("checkout.order") || "Commande"} />
       <div className="container-full py-6 border-b border-border">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Link to="/cart" className="hover:text-foreground transition-colors">{t("cart.yourCart")}</Link>

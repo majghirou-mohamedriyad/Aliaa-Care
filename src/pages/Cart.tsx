@@ -8,6 +8,7 @@ import { useActivePromotions } from "@/hooks/usePromotions";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/hooks/useT";
 import { getTranslated } from "@/utils/translationUtils";
+import { MetaManager } from "@/seo/components/MetaManager";
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, getSubtotal } = useCart();
@@ -23,6 +24,7 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <>
+        <MetaManager title={t("cart.yourCart") || "Mon Panier"} />
         <div className="container-narrow py-28 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <ShoppingBag className="w-16 h-16 mx-auto mb-6 text-muted-foreground/30" />
@@ -39,6 +41,7 @@ const Cart = () => {
 
   return (
     <>
+      <MetaManager title={t("cart.yourCart") || "Mon Panier"} />
       <div className="container-full py-6 border-b border-border">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Link to="/products" className="hover:text-foreground transition-colors">{t("common.shop")}</Link>

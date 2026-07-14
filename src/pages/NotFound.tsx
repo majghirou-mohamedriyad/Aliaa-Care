@@ -2,10 +2,12 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
+import { MetaManager } from "@/seo/components/MetaManager";
 
 const NotFound = () => {
   return (
     <>
+      <MetaManager title="Page non trouvée" />
       <section className="py-20 md:py-28">
         <div className="container-narrow text-center">
           <motion.div
