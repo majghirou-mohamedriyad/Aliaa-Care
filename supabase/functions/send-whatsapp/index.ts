@@ -29,7 +29,12 @@ serve(async (req) => {
     const hasButtons = buttons && Array.isArray(buttons) && buttons.length > 0;
     
     // Clean URL to avoid double slashes
-    const baseUrl = WAHA_URL?.endsWith("/") ? WAHA_URL.slice(0, -1) : WAHA_URL;
+    let baseUrl = WAHA_URL?.endsWith("/") ? WAHA_URL.slice(0, -1) : WAHA_URL;
+    
+    // Auto-rewrite public IP to internal Docker service name if running inside VPS
+    if (baseUrl && (baseUrl.includes("185.197.249.4") || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1"))) {
+      baseUrl = "http://waha:3000";
+    }
     
     // On utilise sendPoll car c'est beaucoup plus compatible que les boutons classiques
     const endpoint = hasButtons ? "sendPoll" : "sendText";
