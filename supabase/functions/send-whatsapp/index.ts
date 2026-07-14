@@ -59,7 +59,7 @@ serve(async (req) => {
     console.log(`[WAHA] Payload: ${JSON.stringify(payload)}`);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout to allow WAHA enough time on slower VPS
 
     const response = await fetch(fullUrl, {
       method: "POST",
