@@ -245,9 +245,12 @@ const AdminOrders = () => {
       });
       toast({ title: "Statut mis à jour", description: `La commande est maintenant ${statusConfig[newStatus].label.toLowerCase()}.` });
 
+      // Envoi automatique désactivé temporairement
+      /*
       if (newStatus === "delivered" && order) {
         await handleSendFeedbackRequest(order);
       }
+      */
     } catch (error) {
       toast({ title: "Erreur", description: "Impossible de mettre à jour le statut", variant: "destructive" });
     }
