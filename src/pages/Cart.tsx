@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ShoppingBag, Trash2 } from "lucide-react";
+import { ArrowRight, ShoppingBag, Trash2, Share2 } from "lucide-react";
 
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { useCart } from "@/hooks/useCart";
@@ -9,17 +10,106 @@ import { Button } from "@/components/ui/button";
 import { useT } from "@/hooks/useT";
 import { getTranslated } from "@/utils/translationUtils";
 import { MetaManager } from "@/seo/components/MetaManager";
+import { useClientProducts } from "@/hooks/useClientProducts";
+import { useToast } from "@/hooks/use-toast";
+import { Product } from "@/data/products";
 
 const Cart = () => {
-  const { items, updateQuantity, removeItem, getSubtotal } = useCart();
+  const { items, updateQuantity, removeItem, getSubtotal, addItem } = useCart();
+  const { products = [] } = useClientProducts();
+  const { toast } = useToast();
   const { getTieredDiscount, getTieredPromos } = useActivePromotions();
   const { t, lang } = useT();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Import shared cart
+  useEffect(() => {
+    const shareParam = searchParams.get("share");
+    if (shareParam && products.length > 0) {
+      try {
+        const decodedJson = decodeURIComponent(atob(shareParam));
+        const sharedItems = JSON.parse(decodedJson);
+        
+        if (Array.isArray(sharedItems)) {
+          sharedItems.forEach((sharedItem: any) => {
+            const product = products.find((p) => p.id === sharedItem.id);
+            if (product) {
+              addItem(product as unknown as Product, sharedItem.q, sharedItem.f, undefined, sharedItem.w);
+            }
+          });
+
+          // Clear query param from URL
+          searchParams.delete("share");
+          setSearchParams(searchParams);
+
+          toast({
+            title: lang === 'ar' ? "تم استيراد السلة المشتركة" : lang === 'en' ? "Shared cart imported" : "Panier partagé importé !",
+            description: lang === 'ar' ? "تمت إضافة المنتجات المشتركة إلى سلتك." : lang === 'en' ? "The shared products have been added to your cart." : "Les produits partagés ont été ajoutés à votre panier.",
+          });
+        }
+      } catch (e) {
+        console.error("Failed to parse shared cart link:", e);
+      }
+    }
+  }, [searchParams, products, addItem, setSearchParams, lang, toast]);
+
+  const handleShareCart = async () => {
+    const sharedData = items.map((item) => ({
+      id: item.product.id,
+      q: item.quantity,
+      w: item.selectedWeight,
+      f: item.selectedFlavors,
+    }));
+    
+    try {
+      const base64 = btoa(encodeURIComponent(JSON.stringify(sharedData)));
+      const shareUrl = `${window.location.origin}/cart?share=${base64}`;
+      const title = lang === 'ar' ? "سلة تسوق علياء كير" : lang === 'en' ? "Aliaa Care Shopping Cart" : "Panier Aliaa Care";
+      const text = lang === 'ar' ? "لقد شاركت سلة تسوقي معك من علياء كير!" : lang === 'en' ? "I shared my Aliaa Care shopping cart with you!" : "Je partage mon panier d'achat Aliaa Care avec vous !";
+
+      if (navigator.share) {
+        await navigator.share({
+          title: title,
+          text: text,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: lang === 'ar' ? "تم نسخ رابط السلة" : lang === 'en' ? "Cart link copied" : "Lien du panier copié !",
+          description: lang === 'ar' ? "يمكنك الآن مشاركته مع من تحب." : lang === 'en' ? "You can now share it with anyone." : "Vous pouvez maintenant le partager par message ou WhatsApp.",
+        });
+      }
+    } catch (e) {
+      console.error("Failed to share cart:", e);
+      if (e instanceof Error && e.name !== "AbortError") {
+        // Fallback to clipboard in case of error
+        try {
+          const base64 = btoa(encodeURIComponent(JSON.stringify(sharedData)));
+          const shareUrl = `${window.location.origin}/cart?share=${base64}`;
+          await navigator.clipboard.writeText(shareUrl);
+          toast({
+            title: lang === 'ar' ? "تم نسخ رابط السلة" : lang === 'en' ? "Cart link copied" : "Lien du panier copié !",
+            description: lang === 'ar' ? "يمكنك الآن مشاركته مع من تحب." : lang === 'en' ? "You can now share it with anyone." : "Vous pouvez maintenant le partager par message ou WhatsApp.",
+          });
+        } catch (clipErr) {
+          console.error("Fallback clipboard also failed:", clipErr);
+        }
+      }
+    }
+  };
+
   const subtotal = getSubtotal();
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
   const tieredDiscount = getTieredDiscount(totalItems);
   const tieredPromos = getTieredPromos();
   const discountAmount = Math.round(subtotal * tieredDiscount / 100);
   const total = subtotal - discountAmount;
+
+  const cartProductIds = items.map((item) => item.product.id);
+  const upsellProducts = products
+    .filter((p) => !cartProductIds.includes(p.id) && p.stock > 0)
+    .slice(0, 3);
 
   if (items.length === 0) {
     return (
@@ -143,6 +233,64 @@ const Cart = () => {
                   </motion.div>
                 ))}
               </div>
+
+              {/* Complementary Products (Upsell) */}
+              {upsellProducts.length > 0 && (
+                <div className="mt-12 pt-10 border-t border-border">
+                  <h3 className="font-serif text-2xl mb-2">
+                    {lang === 'ar' ? "أكمل طلبك" : lang === 'en' ? "Complete your order" : "Complétez votre commande"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {lang === 'ar' ? "قد تعجبك هذه المنتجات أيضاً :" : lang === 'en' ? "You might also like these products:" : "Ces produits pourraient également vous plaire :"}
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    {upsellProducts.map((p) => {
+                      const hasOptions = (p.flavors && p.flavors.length > 0) || (p.weight_prices && p.weight_prices.length > 0);
+                      
+                      const handleQuickAdd = () => {
+                        const defaultWeight = p.weight_prices?.[0]?.weight || p.weight || undefined;
+                        addItem(p as unknown as Product, 1, undefined, undefined, defaultWeight);
+                        toast({
+                          title: lang === 'ar' ? "تمت الإضافة إلى السلة" : lang === 'en' ? "Added to cart" : "Ajouté au panier",
+                          description: `${getTranslated(p, "name", lang)}`,
+                        });
+                      };
+
+                      return (
+                        <div key={p.id} className="group flex flex-col justify-between border border-border/50 p-4 bg-muted/5 rounded hover:shadow-md transition-all">
+                          <div className="space-y-3">
+                            <Link to={`/product/${p.slug}`} className="aspect-[4/5] w-full block rounded overflow-hidden bg-muted/40 relative">
+                              <img src={p.images[0]} alt={getTranslated(p, "name", lang)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            </Link>
+                            <div>
+                              <Link to={`/product/${p.slug}`} className="font-serif text-sm font-semibold hover:text-primary transition-colors line-clamp-1 block">
+                                {getTranslated(p, "name", lang)}
+                              </Link>
+                              <p className="text-xs text-muted-foreground mt-1 font-bold">{p.price} DH</p>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4">
+                            {hasOptions ? (
+                              <Button asChild variant="outline" size="sm" className="w-full text-xs tracking-wider uppercase rounded-none py-4 border-primary/20 text-primary hover:bg-primary/5">
+                                <Link to={`/product/${p.slug}`}>
+                                  {lang === 'ar' ? "عرض الخيارات" : lang === 'en' ? "View options" : "Voir les options"}
+                                </Link>
+                              </Button>
+                            ) : (
+                              <Button onClick={handleQuickAdd} variant="outline" size="sm" className="w-full text-xs tracking-wider uppercase rounded-none py-4 border-primary/20 text-primary hover:bg-primary/5">
+                                {lang === 'ar' ? "إضافة سريعة" : lang === 'en' ? "Quick add" : "Ajout rapide"}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <Link to="/products" className="inline-flex items-center gap-2 mt-8 text-sm tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowRight className="w-4 h-4 rotate-180" />{t("cart.continueShopping")}
               </Link>
@@ -174,9 +322,20 @@ const Cart = () => {
                     <span>{total.toLocaleString()} DH</span>
                   </div>
                 </div>
-                <Button asChild size="lg" className="w-full rounded-none py-6 text-sm tracking-[0.15em] uppercase btn-premium">
-                  <Link to="/checkout">{t("cart.checkout")}<ArrowRight className="ltr:ml-3 rtl:mr-3 w-4 h-4" /></Link>
-                </Button>
+                <div className="flex gap-2">
+                  <Button asChild size="lg" className="flex-1 rounded-none h-[56px] text-sm tracking-[0.15em] uppercase btn-premium flex items-center justify-center">
+                    <Link to="/checkout">{t("cart.checkout")}<ArrowRight className="ltr:ml-3 rtl:mr-3 w-4.5 h-4.5" /></Link>
+                  </Button>
+                  <Button 
+                    onClick={handleShareCart}
+                    variant="outline" 
+                    size="lg" 
+                    className="w-[56px] h-[56px] rounded-none border-primary/20 text-primary hover:bg-primary/5 p-0 flex items-center justify-center shrink-0"
+                    title={lang === 'ar' ? "مشاركة السلة" : lang === 'en' ? "Share Cart" : "Partager le panier"}
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </Button>
+                </div>
                 <div className="mt-8 pt-6 border-t border-border grid grid-cols-1 gap-4">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("cart.shipping")}</p>

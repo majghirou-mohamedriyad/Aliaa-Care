@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ChevronLeft, ChevronRight, ArrowRight, ShoppingBag, MessageSquare } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, ArrowRight, ShoppingBag, MessageSquare, Flame } from "lucide-react";
 
 import { ProductCard } from "@/components/ProductCard";
 import { QuantitySelector } from "@/components/QuantitySelector";
@@ -438,6 +438,22 @@ const ProductDetail = () => {
                   <WhatsAppIcon className="w-6 h-6 transition-transform group-hover:scale-110" />
                 </Button>
               </div>
+              
+              {/* FOMO Stock Alert */}
+              {product.stock > 0 && product.stock < 5 && (
+                <div className="mt-4 flex items-center gap-2 text-destructive animate-pulse bg-destructive/5 border border-destructive/10 px-4 py-3 rounded">
+                  <Flame className="w-4 h-4 text-destructive shrink-0" />
+                  <p className="text-xs font-semibold tracking-wide">
+                    {lang === 'ar' 
+                      ? `عجّل! المتبقي ${product.stock} قطع فقط في المخزون!` 
+                      : lang === 'en' 
+                      ? `Hurry up! Only ${product.stock} items left in stock!` 
+                      : `Dépêchez-vous ! Plus que ${product.stock} exemplaires disponibles en stock !`
+                    }
+                  </p>
+                </div>
+              )}
+
               <div className="mt-10 pt-8 border-t border-border">
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("productDetail.shipping")}</p>
