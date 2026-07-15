@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -20,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, FolderOpen, Loader2, Search, X, AlertTriangle, Upload, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderOpen, Loader2, Search, X, AlertTriangle, Upload, Globe, LayoutGrid, List } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/utils/imageCompression";
 
@@ -50,6 +51,13 @@ const AdminCategories = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    return (localStorage.getItem("admin_categories_view_mode") as "grid" | "list") || "list";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("admin_categories_view_mode", viewMode);
+  }, [viewMode]);
 
   // Sync dialog state with URL
   const dialogOpen = searchParams.get("action") === "edit" || searchParams.get("action") === "new";
@@ -265,131 +273,202 @@ const AdminCategories = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:pl-1">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher une catégorie..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-9 h-10"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:pl-1">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:max-w-2xl">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher une catégorie..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-9 h-10"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {categories.length > 0 && (
+              <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                <Checkbox 
+                  checked={filteredCategories.length > 0 && selectedIds.length === filteredCategories.length}
+                  onCheckedChange={toggleSelectAll}
+                  id="select-all"
+                />
+                <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
+                  Tout sélectionner
+                </label>
+              </div>
             )}
           </div>
-          {categories.length > 0 && (
-            <div className="flex items-center gap-2 shrink-0">
-              <Checkbox 
-                checked={filteredCategories.length > 0 && selectedIds.length === filteredCategories.length}
-                onCheckedChange={toggleSelectAll}
-                id="select-all"
-              />
-              <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
-                Tout sélectionner
-              </label>
-            </div>
-          )}
+          
+          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-muted/30 shrink-0 self-end md:self-auto">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="h-8 px-3 gap-1.5 rounded-md"
+            >
+              <List className="w-4 h-4" />
+              <span className="text-xs">Liste</span>
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="h-8 px-3 gap-1.5 rounded-md"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-xs">Grille</span>
+            </Button>
+          </div>
         </div>
 
-        {/* Desktop table */}
-        <div className="border border-border rounded-lg overflow-hidden hidden md:block">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="p-3 w-10">
+        {viewMode === "list" ? (
+          <>
+            {/* Desktop table */}
+            <div className="border border-border rounded-lg overflow-hidden hidden md:block">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="p-3 w-10">
+                      <Checkbox
+                        checked={filteredCategories.length > 0 && selectedIds.length === filteredCategories.length}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </th>
+                    <th className="text-left p-3 font-medium">Nom</th>
+                    <th className="text-left p-3 font-medium">Description</th>
+                    <th className="text-right p-3 font-medium">Produits</th>
+                    <th className="text-right p-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCategories.map((c) => {
+                    const isSelected = selectedIds.includes(c.id);
+                    return (
+                      <tr key={c.id} className={`border-t border-border hover:bg-muted/20 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
+                        <td className="p-3 text-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(c.id)}
+                          />
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 border border-border">
+                              <img src={c.image || "/placeholder.svg"} alt={c.name} className="w-full h-full object-cover" />
+                            </div>
+                            <span className="font-medium">{c.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 text-muted-foreground max-w-xs truncate">{c.description}</td>
+                        <td className="p-3 text-right">{productCount(c.id)}</td>
+                        <td className="p-3 text-right space-x-1">
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setCategoryToDelete(c.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filteredCategories.length === 0 && (
+                <div className="p-12 text-center text-muted-foreground">
+                  <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>Aucune catégorie trouvée</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {filteredCategories.map((c) => (
+                <div key={c.id} className={`border border-border rounded-lg p-3 flex items-start gap-3 transition-colors ${selectedIds.includes(c.id) ? 'bg-primary/5 border-primary/20' : ''}`}>
                   <Checkbox
-                    checked={filteredCategories.length > 0 && selectedIds.length === filteredCategories.length}
-                    onCheckedChange={toggleSelectAll}
+                    checked={selectedIds.includes(c.id)}
+                    onCheckedChange={() => toggleSelect(c.id)}
+                    className="mt-1"
                   />
-                </th>
-                <th className="text-left p-3 font-medium">Nom</th>
-                <th className="text-left p-3 font-medium">Description</th>
-                <th className="text-right p-3 font-medium">Produits</th>
-                <th className="text-right p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+                  <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0 border border-border">
+                    <img src={c.image || "/placeholder.svg"} alt={c.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm">{c.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{productCount(c.id)} produits</p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setCategoryToDelete(c.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {filteredCategories.length === 0 && (
+                <div className="p-12 text-center text-muted-foreground">
+                  <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>Aucune catégorie trouvée</p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          /* Grid View */
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredCategories.map((c) => {
                 const isSelected = selectedIds.includes(c.id);
                 return (
-                  <tr key={c.id} className={`border-t border-border hover:bg-muted/20 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
-                    <td className="p-3 text-center">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleSelect(c.id)}
-                      />
-                    </td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 border border-border">
-                          <img src={c.image || "/placeholder.svg"} alt={c.name} className="w-full h-full object-cover" />
+                  <div key={c.id} className={`border border-border rounded-xl p-4 bg-card flex flex-col justify-between hover:shadow-md transition-all ${isSelected ? 'border-primary/40 bg-primary/5' : ''}`}>
+                    <div className="space-y-3">
+                      <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted relative">
+                        <img src={c.image || "/placeholder.svg"} alt={c.name} className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(c.id)}
+                            className="bg-white/90 data-[state=checked]:bg-primary"
+                          />
                         </div>
-                        <span className="font-medium">{c.name}</span>
+                        <Badge className="absolute top-2 right-2 text-[10px] bg-primary/95 text-white">{productCount(c.id)} produits</Badge>
                       </div>
-                    </td>
-                    <td className="p-3 text-muted-foreground max-w-xs truncate">{c.description}</td>
-                    <td className="p-3 text-right">{productCount(c.id)}</td>
-                    <td className="p-3 text-right space-x-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
+                      <div>
+                        <h3 className="font-medium text-sm text-foreground line-clamp-1">{c.name}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1 min-h-[2rem]">{c.description || "Aucune description"}</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-border mt-4 flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setCategoryToDelete(c.id)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setCategoryToDelete(c.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
-          {filteredCategories.length === 0 && (
-            <div className="p-12 text-center text-muted-foreground">
-              <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Aucune catégorie trouvée</p>
             </div>
-          )}
-        </div>
-
-        {/* Mobile cards */}
-        <div className="md:hidden space-y-3">
-          {filteredCategories.map((c) => (
-            <div key={c.id} className={`border border-border rounded-lg p-3 flex items-start gap-3 transition-colors ${selectedIds.includes(c.id) ? 'bg-primary/5 border-primary/20' : ''}`}>
-              <Checkbox
-                checked={selectedIds.includes(c.id)}
-                onCheckedChange={() => toggleSelect(c.id)}
-                className="mt-1"
-              />
-              <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0 border border-border">
-                <img src={c.image || "/placeholder.svg"} alt={c.name} className="w-full h-full object-cover" />
+            {filteredCategories.length === 0 && (
+              <div className="p-12 text-center text-muted-foreground">
+                <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>Aucune catégorie trouvée</p>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm">{c.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{c.description}</p>
-                <p className="text-xs text-muted-foreground mt-1">{productCount(c.id)} produits</p>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setCategoryToDelete(c.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-          {filteredCategories.length === 0 && (
-            <div className="p-12 text-center text-muted-foreground">
-              <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Aucune catégorie trouvée</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

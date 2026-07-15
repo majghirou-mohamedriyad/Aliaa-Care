@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, AlertTriangle, Package, Upload, X, Loader2, Search, Globe, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Package, Upload, X, Loader2, Search, Globe, ChevronLeft, ChevronRight, Star, LayoutGrid, List } from "lucide-react";
 
 interface EditingProduct {
   id?: string;
@@ -73,6 +73,13 @@ const AdminProducts = () => {
   const { toast } = useToast();
   const [editingProduct, setEditingProduct] = useState<EditingProduct | null>(null);
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    return (localStorage.getItem("admin_products_view_mode") as "grid" | "list") || "list";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("admin_products_view_mode", viewMode);
+  }, [viewMode]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -400,7 +407,7 @@ const AdminProducts = () => {
           </div>
         )}
 
-        <div className="flex flex-col items-start gap-4 sm:pl-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full sm:pl-1">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -418,122 +425,204 @@ const AdminProducts = () => {
               </button>
             )}
           </div>
+          
+          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-muted/30 shrink-0">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="h-8 px-3 gap-1.5 rounded-md"
+            >
+              <List className="w-4 h-4" />
+              <span className="text-xs">Liste</span>
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="h-8 px-3 gap-1.5 rounded-md"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-xs">Grille</span>
+            </Button>
+          </div>
         </div>
 
-        {/* Desktop table */}
-        <div className="border border-border rounded-lg overflow-hidden hidden md:block">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="p-3 w-10">
-                  <Checkbox 
-                    checked={filtered.length > 0 && selectedIds.length === filtered.length}
-                    onCheckedChange={toggleSelectAll}
-                  />
-                </th>
-                <th className="text-left p-3 font-medium">Produit</th>
-                <th className="text-left p-3 font-medium">Catégories</th>
-                <th className="text-right p-3 font-medium">Prix</th>
-                <th className="text-right p-3 font-medium">Stock</th>
-                <th className="text-center p-3 font-medium">Actif</th>
-                <th className="text-right p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        {viewMode === "list" ? (
+          <>
+            {/* Desktop table */}
+            <div className="border border-border rounded-lg overflow-hidden hidden md:block">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="p-3 w-10">
+                      <Checkbox 
+                        checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </th>
+                    <th className="text-left p-3 font-medium">Produit</th>
+                    <th className="text-left p-3 font-medium">Catégories</th>
+                    <th className="text-right p-3 font-medium">Prix</th>
+                    <th className="text-right p-3 font-medium">Stock</th>
+                    <th className="text-center p-3 font-medium">Actif</th>
+                    <th className="text-right p-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((p) => {
+                    const productCats = p.category_ids.map((cid) => categories.find((c) => c.id === cid)).filter(Boolean);
+                    const isSelected = selectedIds.includes(p.id);
+                    return (
+                      <tr key={p.id} className={`border-t border-border hover:bg-muted/20 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
+                        <td className="p-3 text-center">
+                          <Checkbox 
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(p.id)}
+                          />
+                        </td>
+                        <td className="p-3 flex items-center gap-3">
+                          <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-10 h-10 rounded object-cover" />
+                          <div>
+                            <p className="font-medium">{p.name}</p>
+                            {p.stock === 0 ? (
+                              <Badge variant="destructive" className="text-[10px] mt-0.5">Rupture de stock</Badge>
+                            ) : p.stock < 5 && p.active && (
+                              <Badge variant="outline" className="text-[10px] mt-0.5 text-amber-600 border-amber-200 bg-amber-50">Stock faible</Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3 text-muted-foreground">
+                          {productCats.map((c) => c?.name).join(", ")}
+                        </td>
+                        <td className="p-3 text-right">{p.price} DH</td>
+                        <td className="p-3 text-right">
+                          <span className={p.stock === 0 ? "text-destructive font-bold" : p.stock < 5 ? "text-amber-600 font-medium" : ""}>
+                            {p.stock === 0 ? "Épuisé" : p.stock}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <Switch checked={p.active} onCheckedChange={() => handleToggleActive(p.id, p.active)} />
+                        </td>
+                        <td className="p-3 text-right space-x-1">
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
+                          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setProductToDelete(p.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filtered.length === 0 && (
+                <div className="p-12 text-center text-muted-foreground">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>Aucun produit trouvé</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
               {filtered.map((p) => {
                 const productCats = p.category_ids.map((cid) => categories.find((c) => c.id === cid)).filter(Boolean);
-                const isSelected = selectedIds.includes(p.id);
                 return (
-                  <tr key={p.id} className={`border-t border-border hover:bg-muted/20 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
-                    <td className="p-3 text-center">
-                      <Checkbox 
-                        checked={isSelected}
-                        onCheckedChange={() => toggleSelect(p.id)}
-                      />
-                    </td>
-                    <td className="p-3 flex items-center gap-3">
-                      <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-10 h-10 rounded object-cover" />
-                      <div>
-                        <p className="font-medium">{p.name}</p>
-                        {p.stock === 0 ? (
-                          <Badge variant="destructive" className="text-[10px] mt-0.5">Rupture de stock</Badge>
-                        ) : p.stock < 5 && p.active && (
-                          <Badge variant="outline" className="text-[10px] mt-0.5 text-amber-600 border-amber-200 bg-amber-50">Stock faible</Badge>
-                        )}
+                  <div key={p.id} className="border border-border rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-14 h-14 rounded object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{productCats.map((c) => c?.name).join(", ")}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-sm font-medium">{p.price} DH</span>
+                          <span className={`text-xs ${p.stock === 0 ? "text-destructive font-bold" : p.stock < 5 ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                            Stock: {p.stock === 0 ? "Épuisé" : p.stock}
+                          </span>
+                        </div>
                       </div>
-                    </td>
-                    <td className="p-3 text-muted-foreground">
-                      {productCats.map((c) => c?.name).join(", ")}
-                    </td>
-                    <td className="p-3 text-right">{p.price} DH</td>
-                    <td className="p-3 text-right">
-                      <span className={p.stock === 0 ? "text-destructive font-bold" : p.stock < 5 ? "text-amber-600 font-medium" : ""}>
-                        {p.stock === 0 ? "Épuisé" : p.stock}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center">
-                      <Switch checked={p.active} onCheckedChange={() => handleToggleActive(p.id, p.active)} />
-                    </td>
-                    <td className="p-3 text-right space-x-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setProductToDelete(p.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
-            <div className="p-12 text-center text-muted-foreground">
-              <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Aucun produit trouvé</p>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile cards */}
-        <div className="md:hidden space-y-3">
-          {filtered.map((p) => {
-            const productCats = p.category_ids.map((cid) => categories.find((c) => c.id === cid)).filter(Boolean);
-            return (
-              <div key={p.id} className="border border-border rounded-lg p-3 space-y-3">
-                <div className="flex items-center gap-3">
-                  <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-14 h-14 rounded object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{p.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{productCats.map((c) => c?.name).join(", ")}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-sm font-medium">{p.price} DH</span>
-                      <span className={`text-xs ${p.stock === 0 ? "text-destructive font-bold" : p.stock < 5 ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
-                        Stock: {p.stock === 0 ? "Épuisé" : p.stock}
-                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={p.active} onCheckedChange={() => handleToggleActive(p.id, p.active)} />
+                        <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setProductToDelete(p.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+              {filtered.length === 0 && (
+                <div className="p-12 text-center text-muted-foreground">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>Aucun produit trouvé</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Switch checked={p.active} onCheckedChange={() => handleToggleActive(p.id, p.active)} />
-                    <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
-                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setProductToDelete(p.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {filtered.length === 0 && (
-            <div className="p-12 text-center text-muted-foreground">
-              <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Aucun produit trouvé</p>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          /* Grid View */
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filtered.map((p) => {
+                const productCats = p.category_ids.map((cid) => categories.find((c) => c.id === cid)).filter(Boolean);
+                return (
+                  <div key={p.id} className={`border border-border rounded-xl p-4 bg-card flex flex-col justify-between hover:shadow-md transition-all ${selectedIds.includes(p.id) ? 'border-primary/40 bg-primary/5' : ''}`}>
+                    <div className="space-y-3">
+                      <div className="aspect-square w-full rounded-lg overflow-hidden bg-muted relative">
+                        <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2">
+                          <Checkbox
+                            checked={selectedIds.includes(p.id)}
+                            onCheckedChange={() => toggleSelect(p.id)}
+                            className="bg-white/90 data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                        {p.stock === 0 ? (
+                          <Badge variant="destructive" className="absolute top-2 right-2 text-[10px]">Rupture</Badge>
+                        ) : p.stock < 5 && p.active && (
+                          <Badge className="absolute top-2 right-2 text-[10px] bg-amber-500 hover:bg-amber-600 text-white">Stock faible</Badge>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                          {productCats.map((c) => c?.name).join(", ")}
+                        </span>
+                        <h3 className="font-medium text-sm text-foreground line-clamp-1 mt-0.5">{p.name}</h3>
+                        <p className="text-sm font-bold text-primary mt-1">{p.price} DH</p>
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-border mt-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={p.active} onCheckedChange={() => handleToggleActive(p.id, p.active)} />
+                        <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setProductToDelete(p.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {filtered.length === 0 && (
+              <div className="p-12 text-center text-muted-foreground">
+                <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>Aucun produit trouvé</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

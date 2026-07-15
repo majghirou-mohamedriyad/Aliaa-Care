@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Package, Loader2, Search, X, AlertTriangle, Upload, ImageIcon, Globe, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Search, X, AlertTriangle, Upload, ImageIcon, Globe, ChevronLeft, ChevronRight, Star, LayoutGrid, List } from "lucide-react";
 
 interface EditingPack {
   id?: string;
@@ -79,6 +80,13 @@ const AdminPacks = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [packToDelete, setPackToDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    return (localStorage.getItem("admin_packs_view_mode") as "grid" | "list") || "list";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("admin_packs_view_mode", viewMode);
+  }, [viewMode]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [productSearch, setProductSearch] = useState("");
@@ -349,7 +357,7 @@ const AdminPacks = () => {
           </div>
         </div>
 
-        <div className="flex flex-col items-start gap-4 sm:pl-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full sm:pl-1">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Rechercher un pack..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-9" />
@@ -359,107 +367,206 @@ const AdminPacks = () => {
               </button>
             )}
           </div>
+          
+          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-muted/30 shrink-0 select-none">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="h-8 px-3 gap-1.5 rounded-md"
+            >
+              <List className="w-4 h-4" />
+              <span className="text-xs">Liste</span>
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="h-8 px-3 gap-1.5 rounded-md"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-xs">Grille</span>
+            </Button>
+          </div>
         </div>
 
-        <div className="border border-border rounded-lg overflow-hidden hidden md:block">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="p-3 w-10">
-                  <Checkbox
-                    checked={filtered.length > 0 && selectedIds.length === filtered.length}
-                    onCheckedChange={toggleSelectAll}
-                  />
-                </th>
-                <th className="text-left p-3 font-medium">Pack</th>
-                <th className="text-left p-3 font-medium">Produits</th>
-                <th className="text-right p-3 font-medium">Prix</th>
-                <th className="text-center p-3 font-medium">Actif</th>
-                <th className="text-right p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => {
-                const isSelected = selectedIds.includes(p.id);
-                return (
-                  <tr key={p.id} className={`border-t border-border hover:bg-muted/20 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
-                    <td className="p-3 text-center">
+        {viewMode === "list" ? (
+          <>
+            {/* Desktop table */}
+            <div className="border border-border rounded-lg overflow-hidden hidden md:block">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="p-3 w-10">
                       <Checkbox
-                        checked={isSelected}
+                        checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </th>
+                    <th className="text-left p-3 font-medium">Pack</th>
+                    <th className="text-left p-3 font-medium">Produits</th>
+                    <th className="text-right p-3 font-medium">Prix</th>
+                    <th className="text-center p-3 font-medium">Actif</th>
+                    <th className="text-right p-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((p) => {
+                    const isSelected = selectedIds.includes(p.id);
+                    return (
+                      <tr key={p.id} className={`border-t border-border hover:bg-muted/20 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
+                        <td className="p-3 text-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(p.id)}
+                          />
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                              {p.image ? (
+                                <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Package className="w-5 h-5 text-primary" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium">{p.name}</p>
+                              <p className="text-xs text-muted-foreground">{p.items.length} produits</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-3 text-muted-foreground text-xs">
+                          {p.items.map((i) => `${i.product_name}${i.selected_weight ? ` (${i.selected_weight})` : ""}`).join(", ")}
+                        </td>
+                        <td className="p-3 text-right font-medium">{p.price} DH</td>
+                        <td className="p-3 text-center">
+                          <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
+                        </td>
+                        <td className="p-3 text-right space-x-1">
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
+                          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setPackToDelete(p.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filtered.length === 0 && (
+                <div className="p-12 text-center text-muted-foreground">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>Aucun pack trouvé</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {filtered.map((p) => (
+                <div key={p.id} className="border border-border rounded-lg p-3 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      {p.image ? (
+                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <Package className="w-6 h-6 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{p.name}</p>
+                      <p className="text-xs text-muted-foreground">{p.items.length} produits · {p.price} DH</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedIds.includes(p.id)}
                         onCheckedChange={() => toggleSelect(p.id)}
                       />
-                    </td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
-                          <Package className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{p.name}</p>
-                          <p className="text-xs text-muted-foreground">{p.items.length} produits</p>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
+                        <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
                       </div>
-                    </td>
-                    <td className="p-3 text-muted-foreground text-xs">
-                      {p.items.map((i) => `${i.product_name}${i.selected_weight ? ` (${i.selected_weight})` : ""}`).join(", ")}
-                    </td>
-                    <td className="p-3 text-right font-medium">{p.price} DH</td>
-                    <td className="p-3 text-center">
-                      <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
-                    </td>
-                    <td className="p-3 text-right space-x-1">
+                    </div>
+                    <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
                       <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setPackToDelete(p.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
-            <div className="p-12 text-center text-muted-foreground">
-              <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Aucun pack trouvé</p>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile cards */}
-        <div className="md:hidden space-y-3">
-          {filtered.map((p) => (
-            <div key={p.id} className="border border-border rounded-lg p-3 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center shrink-0">
-                  <Package className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">{p.items.length} produits · {p.price} DH</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={selectedIds.includes(p.id)}
-                    onCheckedChange={() => toggleSelect(p.id)}
-                  />
-                  <div className="flex items-center gap-2">
-                    <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
-                    <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setPackToDelete(p.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+              ))}
+              {filtered.length === 0 && (
+                <div className="p-12 text-center text-muted-foreground">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>Aucun pack trouvé</p>
                 </div>
-              </div>
+              )}
             </div>
-          ))}
-        </div>
+          </>
+        ) : (
+          /* Grid View */
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filtered.map((p) => {
+                const isSelected = selectedIds.includes(p.id);
+                return (
+                  <div key={p.id} className={`border border-border rounded-xl p-4 bg-card flex flex-col justify-between hover:shadow-md transition-all ${isSelected ? 'border-primary/40 bg-primary/5' : ''}`}>
+                    <div className="space-y-3">
+                      <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted relative">
+                        {p.image ? (
+                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                            <Package className="w-10 h-10 text-primary/40" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 left-2">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(p.id)}
+                            className="bg-white/90 data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                        <Badge className="absolute top-2 right-2 text-[10px] bg-primary text-white">{p.items.length} produits</Badge>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-sm text-foreground line-clamp-1">{p.name}</h3>
+                        <p className="text-[10px] text-muted-foreground line-clamp-2 mt-1 min-h-[1.5rem]">
+                          {p.items.map((i) => `${i.product_name}${i.selected_weight ? ` (${i.selected_weight})` : ""}`).join(", ")}
+                        </p>
+                        <p className="text-sm font-bold text-primary mt-2">{p.price} DH</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-border mt-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
+                        <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setPackToDelete(p.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {filtered.length === 0 && (
+              <div className="p-12 text-center text-muted-foreground">
+                <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>Aucun pack trouvé</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
