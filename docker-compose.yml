@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  openwa:
+    image: rmyndharis/openwa:latest
+    ports:
+      - "2785:2785"
+    environment:
+      - PORT=2785
+      - API_KEY=038e00c4bf9448b2a0fe948ea9b2b141
+      # Vous pouvez configurer SQLite (par défaut) ou PostgreSQL/Redis si besoin
+    volumes:
+      - openwa_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  openwa_data:

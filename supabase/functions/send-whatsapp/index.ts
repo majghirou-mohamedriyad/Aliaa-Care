@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const WAHA_URL = Deno.env.get("WAHA_URL") || "http://waha:3000";
-const WAHA_API_KEY = Deno.env.get("WAHA_API_KEY") || "038e00c4bf9448b2a0fe948ea9b2b141";
+const OPENWA_URL = Deno.env.get("OPENWA_URL") || "http://localhost:2785";
+const OPENWA_API_KEY = Deno.env.get("OPENWA_API_KEY") || "";
+const OPENWA_SESSION_ID = Deno.env.get("OPENWA_SESSION_ID") || "default";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,58 +16,50 @@ serve(async (req) => {
   }
 
   try {
-    const { phone, message, buttons } = await req.json();
+    const { phone, message } = await req.json();
 
     if (!phone || !message) {
       throw new Error("Missing phone or message");
     }
 
-    // Format phone
+    // Format phone number
     let cleanedPhone = phone.replace(/\D/g, "");
     if (cleanedPhone.startsWith("0")) cleanedPhone = "212" + cleanedPhone.substring(1);
     if (cleanedPhone.length === 9) cleanedPhone = "212" + cleanedPhone;
 
-    const hasButtons = buttons && Array.isArray(buttons) && buttons.length > 0;
-    
     // Clean URL to avoid double slashes
-    let baseUrl = WAHA_URL?.endsWith("/") ? WAHA_URL.slice(0, -1) : WAHA_URL;
-    
-    // Auto-rewrite public IP to internal Docker service name if running inside VPS
-    if (baseUrl && (baseUrl.includes("185.197.249.4") || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1"))) {
-      baseUrl = "http://waha:3000";
-    }
-    
-    // On utilise sendPoll car c'est beaucoup plus compatible que les boutons classiques
-    const endpoint = hasButtons ? "sendPoll" : "sendText";
-    const fullUrl = `${baseUrl}/api/${endpoint}`;
+    let baseUrl = OPENWA_URL?.endsWith("/") ? OPENWA_URL.slice(0, -1) : OPENWA_URL;
 
-    const payload: any = {
+    // Auto-rewrite public IP or localhost to internal Docker service name if running inside the VPS
+    if (baseUrl && (baseUrl.includes("185.197.249.4") || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1"))) {
+      baseUrl = "http://openwa:2785";
+    }
+
+    // Endpoint for OpenWA send-text
+    const fullUrl = `${baseUrl}/api/sessions/${OPENWA_SESSION_ID}/messages/send-text`;
+
+    const payload = {
       chatId: `${cleanedPhone}@c.us`,
-      session: "default"
+      text: message
     };
 
-    if (hasButtons) {
-      payload.poll = {
-        name: message, // Dans un sondage, le texte principal est le 'name'
-        options: buttons.map((b: any) => b.text),
-        multipleAnswers: false
-      };
-    } else {
-      payload.text = message;
-    }
-
-    console.log(`[WAHA] Sending to: ${fullUrl}`);
-    console.log(`[WAHA] Payload: ${JSON.stringify(payload)}`);
+    console.log(`[OpenWA] Sending to: ${fullUrl}`);
+    console.log(`[OpenWA] Payload: ${JSON.stringify(payload)}`);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout to allow WAHA enough time on slower VPS
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (OPENWA_API_KEY) {
+      headers["X-API-Key"] = OPENWA_API_KEY;
+    }
 
     const response = await fetch(fullUrl, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json", 
-        "X-Api-Key": WAHA_API_KEY || "" 
-      },
+      headers: headers,
       body: JSON.stringify(payload),
       signal: controller.signal
     });
@@ -74,18 +67,19 @@ serve(async (req) => {
     clearTimeout(timeoutId);
 
     const result = await response.json();
-    console.log(`[WAHA] Response status: ${response.status}`);
-    console.log(`[WAHA] Response data: ${JSON.stringify(result)}`);
+    console.log(`[OpenWA] Response status: ${response.status}`);
+    console.log(`[OpenWA] Response data: ${JSON.stringify(result)}`);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: response.status,
     });
   } catch (error) {
-    console.error("WAHA Error:", error.message);
+    console.error("OpenWA Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
     });
   }
 });
+
