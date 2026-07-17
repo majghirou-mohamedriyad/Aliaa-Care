@@ -30,11 +30,6 @@ serve(async (req) => {
     // Clean URL to avoid double slashes
     let baseUrl = OPENWA_URL?.endsWith("/") ? OPENWA_URL.slice(0, -1) : OPENWA_URL;
 
-    // Auto-rewrite public IP or localhost to internal Docker service name if running inside the VPS
-    if (baseUrl && (baseUrl.includes("185.197.249.4") || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1"))) {
-      baseUrl = "http://openwa:2785";
-    }
-
     // Endpoint for OpenWA send-text
     const fullUrl = `${baseUrl}/api/sessions/${OPENWA_SESSION_ID}/messages/send-text`;
 
