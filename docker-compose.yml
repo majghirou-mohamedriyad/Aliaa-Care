@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   openwa:
-    image: rmyndharis/openwa:latest
+    image: ghcr.io/rmyndharis/openwa:latest
     ports:
       - "2785:2785"
     environment:
