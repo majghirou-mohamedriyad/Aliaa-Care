@@ -15,5 +15,28 @@ services:
       - openwa_data:/app/data
     restart: unless-stopped
 
+  db-umami:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=umami
+      - POSTGRES_USER=umami
+      - POSTGRES_PASSWORD=umami_secure_pass_123
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    ports:
+      - "3003:3000"
+    environment:
+      - DATABASE_URL=postgresql://umami:umami_secure_pass_123@db-umami:5432/umami
+      - DATABASE_TYPE=postgresql
+      - APP_SECRET=c0febece363c5d979cf050f5
+    depends_on:
+      - db-umami
+    restart: unless-stopped
+
 volumes:
   openwa_data:
+  umami_db_data:
