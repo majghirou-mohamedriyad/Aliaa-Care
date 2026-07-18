@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const OPENWA_URL = Deno.env.get("OPENWA_URL") || "http://185.197.249.4:2785";
-const OPENWA_API_KEY = Deno.env.get("OPENWA_API_KEY") || "038e00c4bf9448b2a0fe948ea9b2b141";
+const OPENWA_API_KEY = Deno.env.get("OPENWA_API_KEY") || "owa_k1_8e8d1dad118d422c4b0bcc77723a9719eca52913e6813b2f84e32fb479f223cf";
 const OPENWA_SESSION_ID = Deno.env.get("OPENWA_SESSION_ID") || "aliaa-care";
 
 const corsHeaders = {
