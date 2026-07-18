@@ -8,7 +8,9 @@ services:
     environment:
       - PORT=2785
       - API_KEY=038e00c4bf9448b2a0fe948ea9b2b141
-      - WHATSAPP_DEFAULT_ENGINE=NOWEB
+      - ENGINE_TYPE=baileys
+      - AUTO_START_SESSIONS=true
+      - SIMULATE_TYPING=true
     volumes:
       - openwa_data:/app/data
     restart: unless-stopped
