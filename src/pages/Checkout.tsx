@@ -241,8 +241,7 @@ const Checkout = () => {
 
 
       // Send WhatsApp notification
-      try {
-        const fullPhone = formData.phone;
+      const fullPhone = formData.phone;
         const mappedItems = items.map((i) => {
           let price = i.product.price;
           if (i.selectedWeight && (i.product as any).weight_prices) {
