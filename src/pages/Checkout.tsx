@@ -261,22 +261,20 @@ const Checkout = () => {
           };
         });
 
-        // 1. Send to the customer
-        await sendOrderWhatsAppNotification(
-          {
-            order_number: orderNumber,
-            total,
-            customerName,
-            phone: fullPhone,
-            address: formData.address,
-          },
-          mappedItems,
-          lang // Pass the current language
-        );
-
-        // 2. Send copy to admin (212699928463)
-        try {
-          await sendOrderWhatsAppNotification(
+        // Send WhatsApp notifications in parallel in background (non-blocking for fast UX)
+        Promise.all([
+          sendOrderWhatsAppNotification(
+            {
+              order_number: orderNumber,
+              total,
+              customerName,
+              phone: fullPhone,
+              address: formData.address,
+            },
+            mappedItems,
+            lang
+          ),
+          sendOrderWhatsAppNotification(
             {
               order_number: orderNumber,
               total,
@@ -286,13 +284,10 @@ const Checkout = () => {
             },
             mappedItems,
             lang
-          );
-        } catch (adminWaError) {
-          console.error("Failed to send Admin WhatsApp notification:", adminWaError);
-        }
-      } catch (waError) {
-        console.error("Failed to send WhatsApp notification:", waError);
-      }
+          ),
+        ]).catch((waError) => {
+          console.error("Failed to send WhatsApp notifications:", waError);
+        });
 
       if (appliedPromo) {
         await incrementUsage.mutateAsync(appliedPromo.id);
