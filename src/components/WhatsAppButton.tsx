@@ -29,7 +29,7 @@ export const WhatsAppButton = () => {
           exit={{ scale: 0, opacity: 0, y: 20 }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="fixed bottom-24 right-6 z-40 bg-[#25D366] text-white p-4 rounded-full shadow-lg hover:bg-[#128C7E] transition-colors group"
+          className="fixed bottom-20 right-4 sm:bottom-22 sm:right-6 z-40 bg-[#25D366] text-white p-3.5 sm:p-4 rounded-full shadow-lg hover:bg-[#128C7E] transition-colors group"
           title="Contactez-nous sur WhatsApp"
         >
           <div className="relative">

@@ -170,7 +170,7 @@ const ProductDetail = () => {
           <div className="grid lg:grid-cols-12 gap-12 lg:gap-24 items-start">
             <div className="lg:col-span-5 space-y-4">
               <div
-                className="relative aspect-square max-h-[500px] overflow-hidden bg-muted/30 group cursor-zoom-in rounded-lg"
+                className="relative aspect-square max-h-[500px] overflow-hidden bg-muted/20 group cursor-zoom-in rounded-lg border border-border"
                 onMouseMove={handleMouseMove}
                 onMouseEnter={() => setIsZooming(true)}
                 onMouseLeave={() => setIsZooming(false)}
@@ -188,39 +188,39 @@ const ProductDetail = () => {
                       transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
                       transform: isZooming ? "scale(2)" : "scale(1)"
                     }}
-                    className="w-full h-full object-cover transition-transform duration-200 ease-out"
+                    className="w-full h-full object-contain p-2 transition-transform duration-200 ease-out"
                   />
                 </AnimatePresence>
                 {product.images.length > 1 && (
                   <>
-                    <button onClick={prevImage} className="absolute start-5 top-1/2 -translate-y-1/2 p-3 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full">
+                    <button onClick={prevImage} className="absolute start-3 top-1/2 -translate-y-1/2 p-2.5 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
                       <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
                     </button>
-                    <button onClick={nextImage} className="absolute end-5 top-1/2 -translate-y-1/2 p-3 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full">
+                    <button onClick={nextImage} className="absolute end-3 top-1/2 -translate-y-1/2 p-2.5 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
                       <ChevronRight className="w-5 h-5 rtl:rotate-180" />
                     </button>
-                    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                       {product.images.map((_, index) => (
                         <button key={index} onClick={() => setCurrentImageIndex(index)}
-                          className={cn("w-8 h-0.5 transition-all duration-500", index === currentImageIndex ? "bg-foreground" : "bg-foreground/20 hover:bg-foreground/40")} />
+                          className={cn("w-6 h-0.5 transition-all duration-500", index === currentImageIndex ? "bg-foreground" : "bg-foreground/20 hover:bg-foreground/40")} />
                       ))}
                     </div>
                   </>
                 )}
-                <div className="absolute top-5 start-5 flex flex-col gap-2">
+                <div className="absolute top-3 start-3 flex flex-col gap-1.5 z-10">
                   {product.new && (
-                    <span className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase bg-foreground text-background rounded-sm">{t("common.new")}</span>
+                    <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-foreground text-background rounded-sm">{t("common.new")}</span>
                   )}
                   {product.stock === 0 && (
-                    <span className="px-3 py-1.5 text-[10px] font-bold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">{t("common.outOfStock")}</span>
+                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">{t("common.outOfStock")}</span>
                   )}
                 </div>
               </div>
               {product.images.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-2">
+                <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2">
                   {product.images.map((image, index) => (
                     <button key={index} onClick={() => setCurrentImageIndex(index)}
-                      className={cn("w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg transition-all duration-300",
+                      className={cn("w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 overflow-hidden rounded-lg transition-all duration-300 border border-border",
                         index === currentImageIndex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "opacity-60 hover:opacity-100")}>
                       <img src={image} alt={`${getTranslated(product, "name", lang)} ${index + 1}`} className="w-full h-full object-cover" />
                     </button>
@@ -234,9 +234,9 @@ const ProductDetail = () => {
               className="lg:col-span-7 lg:sticky lg:top-28 lg:self-start">
               {collection && (
                 <Link to={`/products?collection=${collection.slug}`}
-                  className="inline-block text-[11px] font-semibold tracking-[0.3em] uppercase text-primary mb-5 hover:text-primary/80 transition-colors">{getTranslated(collection, "name", lang)}</Link>
+                  className="inline-block text-[11px] font-semibold tracking-[0.3em] uppercase text-primary mb-3 hover:text-primary/80 transition-colors">{getTranslated(collection, "name", lang)}</Link>
               )}
-              <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-foreground mb-5 leading-[1.05]">{getTranslated(product, "name", lang)}</h1>
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-foreground mb-4 leading-tight break-words">{getTranslated(product, "name", lang)}</h1>
               {(() => {
                 const discount = getProductDiscount(product.id, product.collections || []);
                 const basePrice = getBasePrice();
@@ -344,99 +344,64 @@ const ProductDetail = () => {
                 </div>
               </div>
               <div className={cn("grid gap-6 mb-8", product.flavors && product.flavors.length > 0 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1")}>
-                <div>
-                  <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground block mb-3">{t("common.quantity")}</span>
-                  <QuantitySelector
-                    quantity={quantity}
-                    onQuantityChange={(q) => {
-                      setQuantity(q);
-                      const currentFlavors = getTranslated(product, "flavors", lang) as string[];
-                      if (currentFlavors && currentFlavors.length > 0) {
-                        const newFlavors = [...selectedFlavors];
-                        if (newFlavors.length < q) {
-                          const defaultFlavor = currentFlavors[0];
-                          while (newFlavors.length < q) newFlavors.push(defaultFlavor);
-                        } else if (newFlavors.length > q) {
-                          newFlavors.splice(q);
-                        }
-                        setSelectedFlavors(newFlavors);
+              <div className="flex items-center gap-2 sm:gap-3 w-full mb-3">
+                <QuantitySelector
+                  quantity={quantity}
+                  className="h-12 sm:h-14 shrink-0 bg-background"
+                  onQuantityChange={(q) => {
+                    setQuantity(q);
+                    const currentFlavors = getTranslated(product, "flavors", lang) as string[];
+                    if (currentFlavors && currentFlavors.length > 0) {
+                      const newFlavors = [...selectedFlavors];
+                      if (newFlavors.length < q) {
+                        const defaultFlavor = currentFlavors[0];
+                        while (newFlavors.length < q) newFlavors.push(defaultFlavor);
+                      } else if (newFlavors.length > q) {
+                        newFlavors.splice(q);
                       }
-                    }}
-                  />
-                </div>
-
-                {product.flavors && product.flavors.length > 0 && (
-                  <div className="space-y-4">
-                    <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground block mb-3">
-                      {lang === 'ar' ? (quantity > 1 ? "اختر النكهات" : "اختر النكهة") : 
-                       lang === 'en' ? (quantity > 1 ? "Choose flavors" : "Choose flavor") :
-                       (quantity > 1 ? "Choisir les goûts" : "Choisir le goût")}
-                    </span>
-                    <div className="grid gap-3">
-                      {(() => {
-                        const currentFlavors = getTranslated(product, "flavors", lang) as string[];
-                        return Array.from({ length: quantity }).map((_, i) => (
-                          <div key={i} className="flex flex-col gap-1.5">
-                            {quantity > 1 && <span className="text-[10px] text-muted-foreground">Unité {i + 1}</span>}
-                            <select
-                              className="w-full bg-background border border-border px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
-                              value={selectedFlavors[i] || currentFlavors[0]}
-                              onChange={(e) => {
-                                const newFlavors = [...selectedFlavors];
-                                if (newFlavors.length <= i) {
-                                  while (newFlavors.length <= i) newFlavors.push(currentFlavors[0]);
-                                }
-                                newFlavors[i] = e.target.value;
-                                setSelectedFlavors(newFlavors);
-                              }}
-                            >
-                              {currentFlavors.map((f) => (
-                                <option key={f} value={f}>{f}</option>
-                              ))}
-                            </select>
-                          </div>
-                        ));
-                      })()}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full">
+                      setSelectedFlavors(newFlavors);
+                    }
+                  }}
+                />
                 <Button
                   size="lg"
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
-                  className="flex-1 min-w-[150px] rounded-none py-6 text-sm tracking-[0.15em] uppercase btn-premium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded-none h-12 sm:h-14 text-xs sm:text-sm tracking-[0.1em] sm:tracking-[0.15em] uppercase py-0 flex items-center justify-center gap-2 btn-premium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <ShoppingBag className="w-4 h-4 me-3" />
-                  {product.stock === 0 ? t("common.unavailable") : t("common.addToCart")}
+                  <ShoppingBag className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{product.stock === 0 ? t("common.unavailable") : t("common.addToCart")}</span>
                 </Button>
+              </div>
 
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="flex-1 min-w-[150px] rounded-none py-6 text-sm tracking-[0.1em] uppercase group"
-                  onClick={handleWishlistToggle}
-                >
-                  <Heart className={cn("w-4 h-4 me-3 transition-all duration-300 group-hover:scale-110", inWishlist && "fill-primary text-primary")} />
-                  {inWishlist ? t("productDetail.saved") : t("productDetail.addToFavorites")}
-                </Button>
+                <div className="grid grid-cols-[1fr_auto] gap-3 w-full">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-none h-12 sm:h-14 text-xs sm:text-sm tracking-normal sm:tracking-[0.05em] uppercase group px-3"
+                    onClick={handleWishlistToggle}
+                  >
+                    <Heart className={cn("w-4 h-4 me-2 shrink-0 transition-all duration-300 group-hover:scale-110", inWishlist && "fill-primary text-primary")} />
+                    <span className="sm:hidden">{inWishlist ? (lang === 'ar' ? "محفوظ" : lang === 'en' ? "Saved" : "Sauvegardé") : (lang === 'ar' ? "المفضلة" : lang === 'en' ? "Favorites" : "Favoris")}</span>
+                    <span className="hidden sm:inline">{inWishlist ? t("productDetail.saved") : t("productDetail.addToFavorites")}</span>
+                  </Button>
 
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-16 rounded-none py-6 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all duration-300 flex-shrink-0 group"
-                  onClick={() => {
-                    const phone = "212699928463";
-                    const url = window.location.href;
-                    const weightText = selectedWeight ? ` (Poids : ${/^\d+(\.\d+)?$/.test(String(selectedWeight).trim()) ? `${selectedWeight}g` : selectedWeight})` : "";
-                    const message = encodeURIComponent(`Bonjour Aliaa Care, j'aimerais avoir plus d'informations sur le produit : ${getTranslated(product, "name", lang)}${weightText}\nPrix : ${discountedPrice} DH\nLien : ${url}`);
-                    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
-                  }}
-                  title={t("productDetail.whatsappQuestion")}
-                >
-                  <WhatsAppIcon className="w-6 h-6 transition-transform group-hover:scale-110" />
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-12 sm:w-16 rounded-none h-12 sm:h-14 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all duration-300 shrink-0 group flex items-center justify-center p-0"
+                    onClick={() => {
+                      const phone = "212699928463";
+                      const url = window.location.href;
+                      const weightText = selectedWeight ? ` (Poids : ${/^\d+(\.\d+)?$/.test(String(selectedWeight).trim()) ? `${selectedWeight}g` : selectedWeight})` : "";
+                      const message = encodeURIComponent(`Bonjour Aliaa Care, j'aimerais avoir plus d'informations sur le produit : ${getTranslated(product, "name", lang)}${weightText}\nPrix : ${discountedPrice} DH\nLien : ${url}`);
+                      window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+                    }}
+                    title={t("productDetail.whatsappQuestion")}
+                  >
+                    <WhatsAppIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
+                  </Button>
+                </div>
               </div>
               
               {/* FOMO Stock Alert */}

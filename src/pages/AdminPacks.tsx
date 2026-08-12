@@ -357,14 +357,28 @@ const AdminPacks = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full sm:pl-1">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Rechercher un pack..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-9" />
-            {search && (
-              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="w-4 h-4" />
-              </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:max-w-2xl">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Rechercher un pack..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-9 h-10 w-full" />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {packs.length > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Checkbox 
+                  checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                  onCheckedChange={toggleSelectAll}
+                  id="select-all-packs"
+                />
+                <label htmlFor="select-all-packs" className="text-xs sm:text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
+                  Tout sélectionner
+                </label>
+              </div>
             )}
           </div>
           
@@ -465,8 +479,13 @@ const AdminPacks = () => {
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
               {filtered.map((p) => (
-                <div key={p.id} className="border border-border rounded-lg p-3 space-y-3">
+                <div key={p.id} className={`border border-border rounded-lg p-3 space-y-3 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/5 border-primary/30' : ''}`}>
                   <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selectedIds.includes(p.id)}
+                      onCheckedChange={() => toggleSelect(p.id)}
+                      className="shrink-0"
+                    />
                     <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                       {p.image ? (
                         <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
@@ -475,20 +494,14 @@ const AdminPacks = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{p.name}</p>
+                      <p className="font-medium text-sm leading-snug line-clamp-2">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.items.length} produits · {p.price} DH</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={selectedIds.includes(p.id)}
-                        onCheckedChange={() => toggleSelect(p.id)}
-                      />
-                      <div className="flex items-center gap-2">
-                        <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
-                        <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
-                      </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-2">
+                      <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
+                      <span className="text-xs text-muted-foreground">{p.active ? "Actif" : "Inactif"}</span>
                     </div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
@@ -571,7 +584,7 @@ const AdminPacks = () => {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent 
-          className="max-w-6xl max-h-[90vh] overflow-y-auto"
+          className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >

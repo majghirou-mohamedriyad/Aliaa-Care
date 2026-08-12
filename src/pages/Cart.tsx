@@ -142,28 +142,28 @@ const Cart = () => {
 
       <section className="py-10 md:py-16">
         <div className="container-full">
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="font-serif text-4xl md:text-5xl mb-12">
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="font-serif text-3xl sm:text-4xl md:text-5xl mb-6 sm:mb-12">
             {t("cart.yourCart")}
           </motion.h1>
 
-          <div className="grid lg:grid-cols-12 gap-12 lg:gap-16">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-16">
             <div className="lg:col-span-7">
               <div className="space-y-0">
                 {items.map((item, index) => (
                   <motion.div key={`${item.product.id}-${item.selectedWeight || 'default'}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }} className="flex gap-6 py-8 border-b border-border">
-                    <Link to={`/product/${item.product.slug}`} className="w-28 h-32 md:w-36 md:h-44 flex-shrink-0 overflow-hidden bg-muted/30 group">
+                    transition={{ duration: 0.4, delay: index * 0.1 }} className="flex gap-3 sm:gap-6 py-6 sm:py-8 border-b border-border items-start">
+                    <Link to={`/product/${item.product.slug}`} className="w-20 h-24 sm:w-28 sm:h-32 md:w-36 md:h-44 shrink-0 overflow-hidden bg-muted/30 rounded group">
                       <img src={item.product.images[0]} alt={getTranslated(item.product, "name", lang)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     </Link>
-                      <div className="flex-1 flex flex-col">
-                      <div className="flex-1">
-                        <Link to={`/product/${item.product.slug}`} className="font-serif text-lg md:text-xl hover:text-primary transition-colors">{getTranslated(item.product, "name", lang)}</Link>
+                    <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
+                      <div className="flex-1 min-w-0">
+                        <Link to={`/product/${item.product.slug}`} className="font-serif text-base sm:text-lg md:text-xl hover:text-primary transition-colors line-clamp-1 block">{getTranslated(item.product, "name", lang)}</Link>
                         {item.selectedWeight && (
-                          <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                          <p className="text-[11px] sm:text-xs font-semibold text-muted-foreground mt-0.5">
                             Poids: {/^\d+(\.\d+)?$/.test(String(item.selectedWeight).trim()) ? `${item.selectedWeight} g` : item.selectedWeight}
                           </p>
                         )}
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{getTranslated(item.product, "description", lang)}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{getTranslated(item.product, "description", lang)}</p>
                         
                         {item.selectedFlavors && item.selectedFlavors.length > 0 && (
                           <div className="mt-2 space-y-1">
@@ -174,7 +174,7 @@ const Cart = () => {
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {item.selectedFlavors.map((flavor, i) => (
-                                <span key={i} className="text-[11px] px-2 py-0.5 bg-muted rounded-full">
+                                <span key={i} className="text-[10px] sm:text-[11px] px-2 py-0.5 bg-muted rounded-full">
                                   {flavor}
                                 </span>
                               ))}
@@ -183,7 +183,7 @@ const Cart = () => {
                         )}
 
                         {item.packItemFlavors && Object.keys(item.packItemFlavors).length > 0 && (
-                          <div className="mt-3 space-y-3">
+                          <div className="mt-2 space-y-2">
                             <p className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
                               {lang === 'ar' ? "تفاصيل النكهات :" : 
                                lang === 'en' ? "Flavor details :" : 
@@ -194,11 +194,11 @@ const Cart = () => {
                               if (!flavors || flavors.length === 0) return null;
                               const packItemTranslatedName = getTranslated({ name: packItem.product_name, name_ar: packItem.product_name_ar, name_en: packItem.product_name_en }, "name", lang);
                               return (
-                                <div key={packItem.product_id} className="pl-3 border-l-2 border-primary/20">
-                                  <p className="text-xs font-medium">{packItemTranslatedName}</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
+                                <div key={packItem.product_id} className="pl-2 border-l-2 border-primary/20">
+                                  <p className="text-[11px] font-medium truncate">{packItemTranslatedName}</p>
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
                                     {flavors.map((f: string, i: number) => (
-                                      <span key={i} className="text-[10px] px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10">
+                                      <span key={i} className="text-[9px] px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10">
                                         {f}
                                       </span>
                                     ))}
@@ -217,16 +217,16 @@ const Cart = () => {
                               price = wp.price;
                             }
                           }
-                          return <p className="font-serif text-lg mt-3">{price.toLocaleString()} DH</p>;
+                          return <p className="font-serif text-base sm:text-lg font-bold text-foreground mt-2">{price.toLocaleString()} DH</p>;
                         })()}
                       </div>
-                      <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border/40 sm:border-0 sm:pt-0">
                         <QuantitySelector 
                           quantity={item.quantity} 
                           onQuantityChange={(qty) => updateQuantity(item.product.id, qty, undefined, undefined, item.selectedWeight)} 
                         />
-                        <button onClick={() => removeItem(item.product.id, item.selectedWeight)} className="p-2 text-muted-foreground hover:text-destructive transition-colors">
-                          <Trash2 className="w-5 h-5" />
+                        <button onClick={() => removeItem(item.product.id, item.selectedWeight)} className="p-1.5 sm:p-2 text-muted-foreground hover:text-destructive transition-colors shrink-0">
+                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
                     </div>
@@ -236,15 +236,15 @@ const Cart = () => {
 
               {/* Complementary Products (Upsell) */}
               {upsellProducts.length > 0 && (
-                <div className="mt-12 pt-10 border-t border-border">
-                  <h3 className="font-serif text-2xl mb-2">
+                <div className="mt-10 sm:mt-12 pt-8 sm:pt-10 border-t border-border">
+                  <h3 className="font-serif text-xl sm:text-2xl mb-1.5">
                     {lang === 'ar' ? "أكمل طلبك" : lang === 'en' ? "Complete your order" : "Complétez votre commande"}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-6">
                     {lang === 'ar' ? "قد تعجبك هذه المنتجات أيضاً :" : lang === 'en' ? "You might also like these products:" : "Ces produits pourraient également vous plaire :"}
                   </p>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
                     {upsellProducts.map((p) => {
                       const hasOptions = (p.flavors && p.flavors.length > 0) || (p.weight_prices && p.weight_prices.length > 0);
                       
@@ -258,29 +258,29 @@ const Cart = () => {
                       };
 
                       return (
-                        <div key={p.id} className="group flex flex-col justify-between border border-border/50 p-4 bg-muted/5 rounded hover:shadow-md transition-all">
-                          <div className="space-y-3">
+                        <div key={p.id} className="group flex flex-col justify-between border border-border/50 p-3 sm:p-4 bg-muted/5 rounded hover:shadow-md transition-all">
+                          <div className="space-y-2.5">
                             <Link to={`/product/${p.slug}`} className="aspect-[4/5] w-full block rounded overflow-hidden bg-muted/40 relative">
                               <img src={p.images[0]} alt={getTranslated(p, "name", lang)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                             </Link>
                             <div>
-                              <Link to={`/product/${p.slug}`} className="font-serif text-sm font-semibold hover:text-primary transition-colors line-clamp-1 block">
+                              <Link to={`/product/${p.slug}`} className="font-serif text-xs sm:text-sm font-semibold hover:text-primary transition-colors line-clamp-1 block">
                                 {getTranslated(p, "name", lang)}
                               </Link>
-                              <p className="text-xs text-muted-foreground mt-1 font-bold">{p.price} DH</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 font-bold">{p.price} DH</p>
                             </div>
                           </div>
                           
-                          <div className="mt-4">
+                          <div className="mt-3">
                             {hasOptions ? (
-                              <Button asChild variant="outline" size="sm" className="w-full text-xs tracking-wider uppercase rounded-none py-4 border-primary/20 text-primary hover:bg-primary/5">
+                              <Button asChild variant="outline" size="sm" className="w-full text-[10px] sm:text-xs tracking-wider uppercase rounded-none py-3 h-auto border-primary/20 text-primary hover:bg-primary/5">
                                 <Link to={`/product/${p.slug}`}>
-                                  {lang === 'ar' ? "عرض الخيارات" : lang === 'en' ? "View options" : "Voir les options"}
+                                  {lang === 'ar' ? "خيارات" : lang === 'en' ? "Options" : "Options"}
                                 </Link>
                               </Button>
                             ) : (
-                              <Button onClick={handleQuickAdd} variant="outline" size="sm" className="w-full text-xs tracking-wider uppercase rounded-none py-4 border-primary/20 text-primary hover:bg-primary/5">
-                                {lang === 'ar' ? "إضافة سريعة" : lang === 'en' ? "Quick add" : "Ajout rapide"}
+                              <Button onClick={handleQuickAdd} variant="outline" size="sm" className="w-full text-[10px] sm:text-xs tracking-wider uppercase rounded-none py-3 h-auto border-primary/20 text-primary hover:bg-primary/5">
+                                {lang === 'ar' ? "إضافة" : lang === 'en' ? "Add" : "Ajouter"}
                               </Button>
                             )}
                           </div>
@@ -291,54 +291,54 @@ const Cart = () => {
                 </div>
               )}
 
-              <Link to="/products" className="inline-flex items-center gap-2 mt-8 text-sm tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/products" className="inline-flex items-center gap-2 mt-8 text-xs sm:text-sm tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowRight className="w-4 h-4 rotate-180" />{t("cart.continueShopping")}
               </Link>
             </div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="lg:col-span-5">
-              <div className="bg-linen p-8 lg:sticky lg:top-28">
-                <h2 className="font-serif text-2xl mb-8">{t("cart.summary")}</h2>
-                <div className="space-y-4 mb-8">
+              <div className="bg-linen p-5 sm:p-8 rounded-lg lg:sticky lg:top-28 border border-border/50">
+                <h2 className="font-serif text-xl sm:text-2xl mb-6 sm:mb-8">{t("cart.summary")}</h2>
+                <div className="space-y-3.5 mb-6 sm:mb-8">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t("cart.subtotal")}</span>
-                    <span>{subtotal.toLocaleString()} DH</span>
+                    <span className="font-medium">{subtotal.toLocaleString()} DH</span>
                   </div>
                   {tieredDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-destructive">
+                    <div className="flex justify-between text-sm text-destructive font-medium">
                       <span>{t("cart.tieredDiscount")} (-{tieredDiscount}%)</span>
                       <span>-{discountAmount.toLocaleString()} DH</span>
                     </div>
                   )}
                   {tieredPromos.length > 0 && tieredDiscount === 0 && (
-                    <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2.5">
                       💡 {tieredPromos[0].tier_rules?.[0] && t("cart.addMoreToGetDiscount").replace("{qty}", (tieredPromos[0].tier_rules[0].min_qty - totalItems).toString()).replace("{percent}", tieredPromos[0].tier_rules[0].discount_percent.toString())}
                     </div>
                   )}
                 </div>
-                <div className="border-t border-border pt-4 mb-8">
-                  <div className="flex justify-between font-serif text-xl">
+                <div className="border-t border-border pt-4 mb-6 sm:mb-8">
+                  <div className="flex justify-between font-serif text-lg sm:text-xl font-bold">
                     <span>{t("cart.total")}</span>
                     <span>{total.toLocaleString()} DH</span>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button asChild size="lg" className="flex-1 rounded-none h-[56px] text-sm tracking-[0.15em] uppercase btn-premium flex items-center justify-center">
-                    <Link to="/checkout">{t("cart.checkout")}<ArrowRight className="ltr:ml-3 rtl:mr-3 w-4.5 h-4.5" /></Link>
+                <div className="flex gap-2 w-full">
+                  <Button asChild size="lg" className="flex-1 rounded-none h-12 sm:h-14 text-xs sm:text-sm tracking-[0.1em] sm:tracking-[0.15em] uppercase btn-premium flex items-center justify-center">
+                    <Link to="/checkout">{t("cart.checkout")}<ArrowRight className="ltr:ml-2 rtl:mr-2 w-4 h-4" /></Link>
                   </Button>
                   <Button 
                     onClick={handleShareCart}
                     variant="outline" 
                     size="lg" 
-                    className="w-[56px] h-[56px] rounded-none border-primary/20 text-primary hover:bg-primary/5 p-0 flex items-center justify-center shrink-0"
+                    className="w-12 sm:w-14 h-12 sm:h-14 rounded-none border-primary/20 text-primary hover:bg-primary/5 p-0 flex items-center justify-center shrink-0"
                     title={lang === 'ar' ? "مشاركة السلة" : lang === 'en' ? "Share Cart" : "Partager le panier"}
                   >
-                    <Share2 className="w-5 h-5" />
+                    <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </div>
-                <div className="mt-8 pt-6 border-t border-border grid grid-cols-1 gap-4">
+                <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border grid grid-cols-1 gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("cart.shipping")}</p>
+                    <p className="text-[10px] sm:text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("cart.shipping")}</p>
                     <p className="text-xs text-muted-foreground">{t("cart.deliveryMorocco")}</p>
                   </div>
                 </div>

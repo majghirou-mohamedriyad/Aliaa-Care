@@ -407,26 +407,40 @@ const AdminProducts = () => {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full sm:pl-1">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher un produit..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-10"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:max-w-2xl">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un produit..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 pr-10 h-10 w-full"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {products.length > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Checkbox 
+                  checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                  onCheckedChange={toggleSelectAll}
+                  id="select-all-products"
+                />
+                <label htmlFor="select-all-products" className="text-xs sm:text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
+                  Tout sélectionner
+                </label>
+              </div>
             )}
           </div>
           
-          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-muted/30 shrink-0">
+          <div className="flex items-center justify-end gap-1 border border-border rounded-lg p-1 bg-muted/30 shrink-0 self-start sm:self-auto">
             <Button
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="sm"
@@ -528,11 +542,16 @@ const AdminProducts = () => {
               {filtered.map((p) => {
                 const productCats = p.category_ids.map((cid) => categories.find((c) => c.id === cid)).filter(Boolean);
                 return (
-                  <div key={p.id} className="border border-border rounded-lg p-3 space-y-3">
+                  <div key={p.id} className={`border border-border rounded-lg p-3 space-y-3 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/5 border-primary/30' : ''}`}>
                     <div className="flex items-center gap-3">
-                      <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-14 h-14 rounded object-cover" />
+                      <Checkbox
+                        checked={selectedIds.includes(p.id)}
+                        onCheckedChange={() => toggleSelect(p.id)}
+                        className="shrink-0"
+                      />
+                      <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-14 h-14 rounded object-cover shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{p.name}</p>
+                        <p className="font-medium text-sm leading-snug line-clamp-2">{p.name}</p>
                         <p className="text-xs text-muted-foreground truncate">{productCats.map((c) => c?.name).join(", ")}</p>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-sm font-medium">{p.price} DH</span>
@@ -627,7 +646,7 @@ const AdminProducts = () => {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent 
-          className="max-w-6xl max-h-[90vh] overflow-y-auto"
+          className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >

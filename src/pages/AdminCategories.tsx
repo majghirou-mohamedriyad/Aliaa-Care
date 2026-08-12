@@ -273,15 +273,15 @@ const AdminCategories = () => {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:pl-1">
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:max-w-2xl">
-            <div className="relative w-full max-w-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:max-w-2xl">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher une catégorie..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-9 h-10"
+                className="pl-9 pr-9 h-10 w-full"
               />
               {search && (
                 <button
@@ -293,20 +293,20 @@ const AdminCategories = () => {
               )}
             </div>
             {categories.length > 0 && (
-              <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+              <div className="flex items-center gap-2 shrink-0">
                 <Checkbox 
                   checked={filteredCategories.length > 0 && selectedIds.length === filteredCategories.length}
                   onCheckedChange={toggleSelectAll}
                   id="select-all"
                 />
-                <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
+                <label htmlFor="select-all" className="text-xs sm:text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
                   Tout sélectionner
                 </label>
               </div>
             )}
           </div>
           
-          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-muted/30 shrink-0 self-end md:self-auto">
+          <div className="flex items-center justify-end gap-1 border border-border rounded-lg p-1 bg-muted/30 shrink-0 self-start sm:self-auto">
             <Button
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="sm"
@@ -402,9 +402,9 @@ const AdminCategories = () => {
                     <img src={c.image || "/placeholder.svg"} alt={c.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm">{c.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{c.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{productCount(c.id)} produits</p>
+                    <p className="font-medium text-sm leading-snug line-clamp-2">{c.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{c.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">{productCount(c.id)} produits</p>
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
@@ -473,7 +473,7 @@ const AdminCategories = () => {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent 
-          className="max-w-4xl max-h-[90vh] overflow-y-auto"
+          className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >

@@ -256,28 +256,42 @@ const AdminOrders = () => {
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:pl-1">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher par N°, nom ou téléphone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-9 h-10"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:max-w-2xl">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par N°, nom ou téléphone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-9 h-10 w-full"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {orders.length > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Checkbox 
+                  checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                  onCheckedChange={toggleSelectAll}
+                  id="select-all-orders"
+                />
+                <label htmlFor="select-all-orders" className="text-xs sm:text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
+                  Tout sélectionner
+                </label>
+              </div>
             )}
           </div>
 
-          <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] h-10 sm:-translate-x-3">
+              <SelectTrigger className="w-full sm:w-[180px] h-10">
                 <SelectValue placeholder="Filtrer par statut" />
               </SelectTrigger>
               <SelectContent>
@@ -441,13 +455,20 @@ const AdminOrders = () => {
             const statusInfo = statusConfig[currentStatus];
             const StatusIcon = statusInfo.icon;
             return (
-              <div key={order.id} className="border border-border rounded-lg p-4 space-y-4 bg-card">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <p className="font-mono font-medium text-primary text-sm">#{order.order_number}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}
-                    </p>
+              <div key={order.id} className={`border border-border rounded-lg p-4 space-y-4 transition-colors ${selectedOrderIds.includes(order.id) ? 'bg-primary/5 border-primary/30' : 'bg-card'}`}>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selectedOrderIds.includes(order.id)}
+                      onCheckedChange={() => toggleSelectOrder(order.id)}
+                      className="shrink-0 mt-0.5"
+                    />
+                    <div className="space-y-0.5">
+                      <p className="font-mono font-medium text-primary text-sm">#{order.order_number}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+                      </p>
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -478,22 +499,22 @@ const AdminOrders = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-border">
-                  <span className="font-serif text-lg">{order.total.toLocaleString()} DH</span>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => setEditingOrder(order)} className="gap-2">
-                      <Pencil className="w-4 h-4" /> Modifier
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3 border-t border-border">
+                  <span className="font-serif text-lg font-bold">{order.total.toLocaleString()} DH</span>
+                  <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                    <Button size="sm" variant="outline" onClick={() => setSelectedOrder(order)} className="gap-1.5 h-9 text-xs flex-1 sm:flex-initial">
+                      <Eye className="w-3.5 h-3.5" /> Détails
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setSelectedOrder(order)} className="gap-2">
-                      <Eye className="w-4 h-4" /> Détails
+                    <Button size="sm" variant="outline" onClick={() => setEditingOrder(order)} className="gap-1.5 h-9 text-xs flex-1 sm:flex-initial">
+                      <Pencil className="w-3.5 h-3.5" /> Modifier
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => openWhatsApp(order)} className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                    <Button size="icon" variant="ghost" onClick={() => openWhatsApp(order)} className="text-green-600 hover:text-green-700 hover:bg-green-50 h-9 w-9 shrink-0">
                       <WhatsAppIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => generateInvoice(order)} className="text-primary">
+                    <Button size="icon" variant="ghost" onClick={() => generateInvoice(order)} className="text-primary h-9 w-9 shrink-0">
                       <FileText className="w-4 h-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setOrderToDelete(order.id)}>
+                    <Button size="icon" variant="ghost" className="text-destructive h-9 w-9 shrink-0" onClick={() => setOrderToDelete(order.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -507,7 +528,7 @@ const AdminOrders = () => {
       {/* Order Details Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
         <DialogContent 
-          className="max-w-3xl max-h-[95vh] p-0 overflow-hidden rounded-xl border-none shadow-2xl"
+          className="max-w-3xl w-[95vw] max-h-[95vh] p-0 overflow-hidden rounded-xl border-none shadow-2xl"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -516,15 +537,15 @@ const AdminOrders = () => {
           {selectedOrder && (
             <div className="flex flex-col h-full max-h-[95vh]">
               {/* Premium Header */}
-              <div className="bg-primary p-6 text-primary-foreground relative">
+              <div className="bg-primary p-4 sm:p-6 text-primary-foreground relative">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <ShoppingBag className="w-5 h-5 opacity-80" />
-                      <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-80">Commande</span>
+                      <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-80">Commande</span>
                     </div>
-                    <h2 className="font-serif text-3xl font-bold">#{selectedOrder.order_number}</h2>
-                    <p className="text-sm opacity-70 mt-1 flex items-center gap-1.5">
+                    <h2 className="font-serif text-2xl sm:text-3xl font-bold">#{selectedOrder.order_number}</h2>
+                    <p className="text-xs sm:text-sm opacity-70 mt-1 flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
                       Passée le {format(new Date(selectedOrder.created_at), "PPP à HH:mm", { locale: fr })}
                     </p>
@@ -532,8 +553,8 @@ const AdminOrders = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8 bg-background">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   {/* Left: Customer & Shipping */}
                   <div className="space-y-6">
                     <div className="space-y-4">
@@ -543,19 +564,19 @@ const AdminOrders = () => {
                       </h3>
                       <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
                         <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-lg font-bold">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-base sm:text-lg font-bold shrink-0">
                             {selectedOrder.customer_name.charAt(0)}
                           </div>
-                          <div>
-                            <p className="font-bold text-lg leading-none">{selectedOrder.customer_name}</p>
-                            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5" />
+                          <div className="min-w-0">
+                            <p className="font-bold text-base sm:text-lg leading-none truncate">{selectedOrder.customer_name}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
+                              <Phone className="w-3.5 h-3.5 shrink-0" />
                               {selectedOrder.customer_phone}
                             </p>
                           </div>
                         </div>
                         <div className="space-y-3 pt-3 border-t border-border/50">
-                          <div className="flex items-start gap-3 text-sm">
+                          <div className="flex items-start gap-3 text-xs sm:text-sm">
                             <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                             <div>
                               <p className="font-medium">
@@ -589,7 +610,7 @@ const AdminOrders = () => {
                           <span className="w-1 h-1 rounded-full bg-primary" />
                           Notes Internes
                         </h3>
-                        <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 text-sm italic text-foreground/80 leading-relaxed">
+                        <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 text-xs sm:text-sm italic text-foreground/80 leading-relaxed">
                           "{selectedOrder.notes}"
                         </div>
                       </div>
@@ -606,12 +627,12 @@ const AdminOrders = () => {
                       <div className="border border-border/50 rounded-xl overflow-hidden shadow-sm">
                         <div className="divide-y divide-border/50">
                           {selectedOrder.items.map((item, idx) => (
-                            <div key={idx} className="p-4 flex justify-between items-center hover:bg-muted/10 transition-colors">
-                              <div className="flex-1 min-w-0 pr-4">
-                                <p className="font-bold text-sm truncate">
+                            <div key={idx} className="p-3 sm:p-4 flex justify-between items-center hover:bg-muted/10 transition-colors">
+                              <div className="flex-1 min-w-0 pr-2">
+                                <p className="font-bold text-xs sm:text-sm truncate">
                                   {item.product_name}
                                   {item.selected_weight && (
-                                    <span className="text-xs font-normal text-muted-foreground ml-2">
+                                    <span className="text-xs font-normal text-muted-foreground ml-1.5">
                                       ({/^\d+(\.\d+)?$/.test(String(item.selected_weight).trim()) ? `${item.selected_weight} g` : item.selected_weight})
                                     </span>
                                   )}
@@ -620,7 +641,7 @@ const AdminOrders = () => {
                                   Qté: <span className="font-semibold">{item.quantity}</span> × {item.unit_price} DH
                                 </p>
                                 {item.selected_flavors && item.selected_flavors.length > 0 && (
-                                  <div className="mt-2 flex flex-wrap gap-1">
+                                  <div className="mt-1.5 flex flex-wrap gap-1">
                                     {item.selected_flavors.map((flavor, fIdx) => (
                                       <Badge key={fIdx} variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/5 text-primary border-primary/20">
                                         {flavor}
@@ -630,7 +651,7 @@ const AdminOrders = () => {
                                 )}
                               </div>
                               <div className="text-right shrink-0">
-                                <p className="font-bold text-sm">{(item.quantity * item.unit_price).toLocaleString()} DH</p>
+                                <p className="font-bold text-xs sm:text-sm">{(item.quantity * item.unit_price).toLocaleString()} DH</p>
                               </div>
                             </div>
                           ))}
@@ -639,18 +660,18 @@ const AdminOrders = () => {
                           const subtotal = selectedOrder.items?.reduce((acc, item) => acc + (item.unit_price * item.quantity), 0) ?? 0;
                           const deliveryFee = Math.max(0, selectedOrder.total - subtotal);
                           return (
-                            <div className="bg-muted/30 p-4 border-t border-border/50 space-y-2">
-                              <div className="flex justify-between text-sm">
+                            <div className="bg-muted/30 p-3 sm:p-4 border-t border-border/50 space-y-2">
+                              <div className="flex justify-between text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Sous-total</span>
                                 <span className="font-medium">{subtotal.toLocaleString()} DH</span>
                               </div>
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Livraison</span>
                                 <span className={deliveryFee === 0 ? "font-medium text-green-600" : "font-medium"}>
                                   {deliveryFee === 0 ? "Gratuite" : `${deliveryFee.toLocaleString()} DH`}
                                 </span>
                               </div>
-                              <div className="flex justify-between text-lg font-bold pt-2 border-t border-border/50">
+                              <div className="flex justify-between text-base sm:text-lg font-bold pt-2 border-t border-border/50">
                                 <span className="font-serif">Total</span>
                                 <span className="font-serif text-primary">{selectedOrder.total.toLocaleString()} DH</span>
                               </div>
@@ -666,22 +687,22 @@ const AdminOrders = () => {
                         <History className="w-4 h-4 text-primary" />
                         Historique de Statut
                       </h3>
-                      <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted border border-border/50 rounded-xl p-6">
+                      <div className="relative pl-6 space-y-5 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted border border-border/50 rounded-xl p-4 sm:p-6">
                         <div className="relative">
-                          <div className="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-primary border-4 border-background" />
+                          <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-primary border-4 border-background" />
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold">Commande Reçue</span>
-                            <span className="text-xs text-muted-foreground mt-0.5">
+                            <span className="text-xs sm:text-sm font-bold">Commande Reçue</span>
+                            <span className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                               {format(new Date(selectedOrder.created_at), "PPP à HH:mm", { locale: fr })}
                             </span>
                           </div>
                         </div>
                         {selectedOrder.status_history?.map((step, idx) => (
                           <div key={idx} className="relative">
-                            <div className="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-primary border-4 border-background" />
+                            <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-primary border-4 border-background" />
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold">{step.label}</span>
-                              <span className="text-xs text-muted-foreground mt-0.5">
+                              <span className="text-xs sm:text-sm font-bold">{step.label}</span>
+                              <span className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                                 {format(new Date(step.date), "PPP à HH:mm", { locale: fr })}
                               </span>
                             </div>
@@ -694,21 +715,21 @@ const AdminOrders = () => {
               </div>
 
               {/* Actions Footer */}
-              <div className="p-6 bg-muted/20 border-t border-border flex justify-between items-center">
-                <div className="flex gap-3">
-                  <Button variant="outline" className="h-11 px-6 rounded-none gap-2 text-green-600 border-green-200 hover:bg-green-50 shadow-sm" onClick={() => openWhatsApp(selectedOrder)}>
+              <div className="p-4 sm:p-6 bg-muted/20 border-t border-border flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" className="h-10 sm:h-11 px-4 sm:px-6 rounded-none gap-2 text-green-600 border-green-200 hover:bg-green-50 shadow-sm text-xs sm:text-sm flex-1 sm:flex-initial" onClick={() => openWhatsApp(selectedOrder)}>
                     <WhatsAppIcon className="w-4 h-4" /> WhatsApp
                   </Button>
                   {selectedOrder.status === 'delivered' && (
-                    <Button variant="outline" className="h-11 px-6 rounded-none gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 shadow-sm" onClick={() => handleSendFeedbackRequest(selectedOrder)}>
+                    <Button variant="outline" className="h-10 sm:h-11 px-4 sm:px-6 rounded-none gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 shadow-sm text-xs sm:text-sm flex-1 sm:flex-initial" onClick={() => handleSendFeedbackRequest(selectedOrder)}>
                       <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> Demander Avis
                     </Button>
                   )}
-                  <Button variant="outline" className="h-11 px-6 rounded-none gap-2 shadow-sm" onClick={() => generateInvoice(selectedOrder)}>
+                  <Button variant="outline" className="h-10 sm:h-11 px-4 sm:px-6 rounded-none gap-2 shadow-sm text-xs sm:text-sm flex-1 sm:flex-initial" onClick={() => generateInvoice(selectedOrder)}>
                     <FileText className="w-4 h-4" /> Facture PDF
                   </Button>
                 </div>
-                <Button variant="secondary" className="h-11 px-8 rounded-none shadow-sm" onClick={() => setSelectedOrder(null)}>Fermer</Button>
+                <Button variant="secondary" className="h-10 sm:h-11 px-6 rounded-none shadow-sm text-xs sm:text-sm" onClick={() => setSelectedOrder(null)}>Fermer</Button>
               </div>
             </div>
           )}
@@ -717,7 +738,7 @@ const AdminOrders = () => {
 
       <Dialog open={!!editingOrder} onOpenChange={(open) => !open && setEditingOrder(null)}>
         <DialogContent 
-          className="max-w-2xl h-[90vh] p-0 rounded-xl shadow-2xl flex flex-col overflow-hidden"
+          className="max-w-2xl w-[95vw] h-[90vh] p-0 rounded-xl shadow-2xl flex flex-col overflow-hidden"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >

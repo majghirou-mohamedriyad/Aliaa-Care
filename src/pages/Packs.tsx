@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Gift } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { usePacks } from "@/hooks/usePacks";
 import { PackCard } from "@/components/PackCard";
 import { useT } from "@/hooks/useT";
@@ -71,7 +72,12 @@ const Packs = () => {
               </h2>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+            <div className={cn(
+              "grid gap-8 md:gap-10",
+              activePacks.length === 1 ? "grid-cols-1 max-w-xl mx-auto" :
+              activePacks.length === 2 ? "grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto" :
+              "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            )}>
               {activePacks.map((pack, index) => (
                 <PackCard key={pack.id} pack={pack} index={index} />
               ))}

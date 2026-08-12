@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ArrowDown, Instagram, Leaf, Heart, Sparkles } from "lucide-react";
 import { useRef } from "react";
 
+import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/ProductCard";
 import { CollectionCard } from "@/components/CollectionCard";
 import { useClientProducts } from "@/hooks/useClientProducts";
@@ -147,7 +148,12 @@ const Index = () => {
           
           {activePacks.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className={cn(
+                "grid gap-8",
+                activePacks.length === 1 ? "grid-cols-1 max-w-xl mx-auto" :
+                activePacks.length === 2 ? "grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto" :
+                "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+              )}>
                 {activePacks.slice(0, 3).map((pack, index) => <PackCard key={pack.id} pack={pack} index={index} />)}
               </div>
               <div className="mt-14 text-center md:hidden">

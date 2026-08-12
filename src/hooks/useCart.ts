@@ -38,7 +38,7 @@ export const useCart = create<CartState>()(
 
         set((state) => {
           const existingItem = state.items.find(
-            (item) => item.product.id === product.id && item.selectedWeight === selectedWeight
+            (item) => item.product.id === product.id && String(item.selectedWeight || '') === String(selectedWeight || '')
           );
 
           if (existingItem) {
@@ -48,7 +48,7 @@ export const useCart = create<CartState>()(
             
             return {
               items: state.items.map((item) =>
-                item.product.id === product.id && item.selectedWeight === selectedWeight
+                item.product.id === product.id && String(item.selectedWeight || '') === String(selectedWeight || '')
                   ? { 
                       ...item, 
                       quantity: newQuantity,
@@ -80,7 +80,7 @@ export const useCart = create<CartState>()(
 
         set((state) => ({
           items: state.items.map((item) => {
-            if (item.product.id === productId && item.selectedWeight === selectedWeight) {
+            if (item.product.id === productId && String(item.selectedWeight || '') === String(selectedWeight || '')) {
               const newQty = Math.min(quantity, 10);
               let newFlavors = selectedFlavors || item.selectedFlavors || [];
               
@@ -111,7 +111,7 @@ export const useCart = create<CartState>()(
 
       removeItem: (productId: string, selectedWeight?: string | number) => {
         set((state) => ({
-          items: state.items.filter((item) => !(item.product.id === productId && item.selectedWeight === selectedWeight)),
+          items: state.items.filter((item) => !(item.product.id === productId && String(item.selectedWeight || '') === String(selectedWeight || ''))),
         }));
       },
 
@@ -124,7 +124,7 @@ export const useCart = create<CartState>()(
           (total, item) => {
             let price = item.product.price;
             if (item.selectedWeight && (item.product as any).weight_prices) {
-              const wp = (item.product as any).weight_prices.find((w: any) => w.weight === item.selectedWeight);
+              const wp = (item.product as any).weight_prices.find((w: any) => String(w.weight) === String(item.selectedWeight));
               if (wp) {
                 price = wp.price;
               }

@@ -30,17 +30,17 @@ export const QuantitySelector = ({
   };
 
   return (
-    <div className={cn("flex items-center gap-0 border border-border", className)}>
+    <div className={cn("flex items-center gap-0 border border-border h-11", className)}>
       <Button
         variant="ghost"
         size="icon"
         onClick={decrease}
         disabled={quantity <= min}
-        className="h-11 w-11 rounded-none hover:bg-accent disabled:opacity-30"
+        className="h-full w-10 sm:w-11 rounded-none hover:bg-accent disabled:opacity-30 shrink-0"
       >
-        <Minus className="w-4 h-4" />
+        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </Button>
-      <span className="w-12 text-center text-sm font-medium tabular-nums">
+      <span className="w-8 sm:w-10 text-center text-sm font-medium tabular-nums">
         {quantity}
       </span>
       <Button
@@ -48,9 +48,9 @@ export const QuantitySelector = ({
         size="icon"
         onClick={increase}
         disabled={quantity >= max}
-        className="h-11 w-11 rounded-none hover:bg-accent disabled:opacity-30"
+        className="h-full w-10 sm:w-11 rounded-none hover:bg-accent disabled:opacity-30 shrink-0"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </Button>
     </div>
   );

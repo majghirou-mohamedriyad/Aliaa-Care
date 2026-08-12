@@ -8,10 +8,17 @@ const languages: { code: Language; label: string; native: string; flag: string }
   { code: "ar", label: "العربية", native: "العربية", flag: "🇲🇦" },
 ];
 
+import { useLocation } from "react-router-dom";
+
 export const LanguageSelector = () => {
   const { hasChosen, setLanguage } = useLanguage();
+  const location = useLocation();
 
-  if (hasChosen || window.location.hostname === "admin.riyadmaj.online") return null;
+  const isAdminOrAuth = location.pathname.startsWith("/admin") || 
+                        location.pathname.startsWith("/auth") || 
+                        window.location.hostname.startsWith("admin.");
+
+  if (hasChosen || isAdminOrAuth) return null;
 
   const handleSelect = (lang: Language) => {
     setLanguage(lang);

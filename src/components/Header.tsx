@@ -69,10 +69,10 @@ export const Header = () => {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 transition-all duration-500",
+        "sticky top-0 z-50 transition-all duration-500 bg-background/95 backdrop-blur-md",
         scrolled
-          ? "bg-background border-b border-border shadow-sm"
-          : "bg-background border-b border-transparent"
+          ? "border-b border-border shadow-sm"
+          : "border-b border-transparent"
       )}
     >
       {/* Announcement Bar */}
@@ -102,7 +102,7 @@ export const Header = () => {
           {/* Logo */}
           <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center h-16 md:h-20 shrink-0 hover:opacity-80 transition-opacity duration-300">
             {/* <img src={logoImg} alt="ALIAA Natural Care" className="h-14 md:h-12 w-auto" /> */}
-            <img src={typoImg} alt="ALIAA CARE" className="h-24 md:h-40 w-auto max-w-none pointer-events-none" />
+            <img src={typoImg} alt="ALIAA CARE" className="h-16 md:h-24 max-h-14 md:max-h-18 w-auto scale-125 origin-left object-contain pointer-events-none" />
           </Link>
 
           {/* Desktop Navigation */}

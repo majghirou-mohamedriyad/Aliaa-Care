@@ -136,18 +136,18 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
           />
         )}
 
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
-          <span className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase bg-primary text-primary-foreground rounded-sm flex items-center gap-1.5">
+        <div className="absolute top-3 ltr:left-3 rtl:right-3 flex flex-col gap-1.5 z-10">
+          <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-primary text-primary-foreground rounded-sm flex items-center gap-1.5">
             <Package className="w-3 h-3" />
             Pack
           </span>
           {discount > 0 && (
-            <span className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">
+            <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">
               -{discount}%
             </span>
           )}
           {savings > 0 && (
-            <span className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.15em] uppercase bg-foreground text-background rounded-sm">
+            <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.15em] uppercase bg-foreground text-background rounded-sm">
               -{savings.toFixed(0)} DH
             </span>
           )}
@@ -155,54 +155,54 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
 
         <button 
           onClick={handleWishlistToggle}
-          className="absolute top-4 right-4 p-2.5 bg-background/80 backdrop-blur-md rounded-full shadow-sm hover:bg-background transition-all duration-300 z-10 group/heart"
+          className="absolute top-3 ltr:right-3 rtl:left-3 p-2 sm:p-2.5 bg-background/80 backdrop-blur-md rounded-full shadow-sm hover:bg-background transition-all duration-300 z-10 group/heart"
         >
           <Heart className={cn("w-4 h-4 transition-all duration-300", inWishlist ? "fill-primary text-primary scale-110" : "text-muted-foreground group-hover/heart:scale-110")} />
         </button>
       </div>
 
-      <div className="p-5 space-y-3">
-        <h3 className="font-serif text-lg text-foreground group-hover:text-primary transition-colors leading-snug">
+      <div className="p-4 sm:p-5 space-y-3">
+        <h3 className="font-serif text-base sm:text-lg text-foreground group-hover:text-primary transition-colors leading-snug">
           {getTranslated(pack, "name", lang)}
         </h3>
 
-        <p className="text-sm text-muted-foreground line-clamp-2 h-10">{getTranslated(pack, "description", lang)}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 h-9 sm:h-10">{getTranslated(pack, "description", lang)}</p>
 
         <div className="flex flex-wrap gap-1.5">
           {pack.items.slice(0, 2).map((item) => {
             const itemTranslatedName = getTranslated({ name: item.product_name, name_ar: item.product_name_ar, name_en: item.product_name_en }, "name", lang);
             return (
-              <span key={item.id} className="text-[11px] px-2 py-1 bg-muted rounded-sm text-muted-foreground">
+              <span key={item.id} className="text-[10px] sm:text-[11px] px-2 py-0.5 sm:py-1 bg-muted rounded-sm text-muted-foreground">
                 {itemTranslatedName}
               </span>
             );
           })}
           {pack.items.length > 2 && (
-            <span className="text-[11px] px-2 py-1 bg-muted rounded-sm text-muted-foreground">
+            <span className="text-[10px] sm:text-[11px] px-2 py-0.5 sm:py-1 bg-muted rounded-sm text-muted-foreground">
               {lang === "ar" ? "...أخرى" : lang === "en" ? "Other..." : "Autre ..."}
             </span>
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-baseline gap-2">
+        <div className="flex items-center justify-between gap-2 pt-2">
+          <div className="flex flex-wrap items-baseline gap-1.5">
             {discount > 0 ? (
               <>
-                <span className="text-[19px] font-sans font-bold text-destructive tracking-tight">
-                  {discountedPrice.toLocaleString()}<span className="text-sm font-medium text-muted-foreground/70 ml-1">DH</span>
+                <span className="text-base sm:text-[19px] font-sans font-bold text-destructive tracking-tight">
+                  {discountedPrice.toLocaleString()}<span className="text-xs sm:text-sm font-medium text-muted-foreground/70 ml-0.5 sm:ml-1">DH</span>
                 </span>
-                <span className="text-xs font-sans text-muted-foreground line-through opacity-70">
-                  {pack.price.toLocaleString()}<span className="text-[10px] ml-0.5">DH</span>
+                <span className="text-[10px] sm:text-xs font-sans text-muted-foreground line-through opacity-70">
+                  {pack.price.toLocaleString()}<span className="text-[9px] ml-0.5">DH</span>
                 </span>
               </>
             ) : (
               <>
-                <span className="text-[19px] font-sans font-bold text-foreground tracking-tight">
-                  {pack.price.toLocaleString()}<span className="text-sm font-medium text-muted-foreground/70 ml-1">DH</span>
+                <span className="text-base sm:text-[19px] font-sans font-bold text-foreground tracking-tight">
+                  {pack.price.toLocaleString()}<span className="text-xs sm:text-sm font-medium text-muted-foreground/70 ml-0.5 sm:ml-1">DH</span>
                 </span>
                 {savings > 0 && (
-                  <span className="text-xs font-sans text-muted-foreground line-through opacity-70">
-                    {totalValue.toLocaleString()}<span className="text-[10px] ml-0.5">DH</span>
+                  <span className="text-[10px] sm:text-xs font-sans text-muted-foreground line-through opacity-70">
+                    {totalValue.toLocaleString()}<span className="text-[9px] ml-0.5">DH</span>
                   </span>
                 )}
               </>
@@ -210,10 +210,10 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
           </div>
           <Button
             size="sm"
-            className="rounded-none text-xs tracking-[0.1em] uppercase px-4 sm:px-5 h-10"
+            className="rounded-none text-xs tracking-[0.1em] uppercase px-3 sm:px-4 h-9 sm:h-10 shrink-0"
             onClick={handleAddToCart}
           >
-            <ShoppingBag className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" />
+            <ShoppingBag className="w-3.5 h-3.5 ltr:mr-1.5 rtl:ml-1.5" />
             <span>{t("common.add")}</span>
           </Button>
         </div>

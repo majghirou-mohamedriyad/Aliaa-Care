@@ -185,9 +185,9 @@ const PackDetail = () => {
         </Link>
       </div>
 
-      <section className="container-wide pb-16 md:pb-24">
-        <div className="grid md:grid-cols-2 gap-10 md:gap-16">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="space-y-4">
+      <section className="container-wide pb-16 md:pb-24 overflow-hidden">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-16">
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-4 min-w-0 max-w-full">
             <div className="relative aspect-square overflow-hidden bg-muted/30 rounded-lg border border-border group">
               {pack.images && pack.images.length > 0 ? (
                 <img 
@@ -210,10 +210,10 @@ const PackDetail = () => {
 
               {pack.images && pack.images.length > 1 && (
                 <>
-                  <button onClick={prevImage} className="absolute start-5 top-1/2 -translate-y-1/2 p-3 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
+                  <button onClick={prevImage} className="absolute start-3 top-1/2 -translate-y-1/2 p-2.5 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
                     <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
                   </button>
-                  <button onClick={nextImage} className="absolute end-5 top-1/2 -translate-y-1/2 p-3 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
+                  <button onClick={nextImage} className="absolute end-3 top-1/2 -translate-y-1/2 p-2.5 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
                     <ChevronRight className="w-5 h-5 rtl:rotate-180" />
                   </button>
                 </>
@@ -221,13 +221,13 @@ const PackDetail = () => {
             </div>
 
             {pack.images && pack.images.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2">
                 {pack.images.map((image, index) => (
                   <button 
                     key={index} 
                     onClick={() => setCurrentImageIndex(index)}
                     className={cn(
-                      "w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg transition-all duration-300",
+                      "w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 overflow-hidden rounded-lg transition-all duration-300 border border-border",
                       index === currentImageIndex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "opacity-60 hover:opacity-100"
                     )}
                   >
@@ -238,60 +238,68 @@ const PackDetail = () => {
             )}
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase bg-primary text-primary-foreground rounded-sm flex items-center gap-1.5">
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="flex flex-col justify-center min-w-0 max-w-full">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-primary text-primary-foreground rounded-sm flex items-center gap-1.5">
                 <Package className="w-3 h-3" />{t("common.pack")}
               </span>
               {savings > 0 && (
-                <span className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.15em] uppercase bg-foreground text-background rounded-sm">
+                <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.15em] uppercase bg-foreground text-background rounded-sm">
                   {t("common.save")} {savings.toFixed(0)} DH
                 </span>
               )}
               {discount > 0 && (
-                <span className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">
+                <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">
                   -{discount}%
                 </span>
               )}
             </div>
-            <h1 className="font-serif text-3xl md:text-4xl text-foreground mb-4">{getTranslated(pack, "name", lang)}</h1>
-            <p className="text-muted-foreground leading-normal mb-6 whitespace-pre-wrap">{getTranslated(pack, "long_description", lang) || getTranslated(pack, "description", lang)}</p>
-            <div className="flex items-baseline gap-4 mb-8">
+            {(() => {
+              const rawName = getTranslated(pack, "name", lang);
+              const cleanName = rawName.startsWith("(") && (rawName.match(/\(/g) || []).length > (rawName.match(/\)/g) || []).length
+                ? rawName.substring(1).trim()
+                : rawName;
+              return (
+                <h1 className="font-serif text-xl sm:text-3xl md:text-4xl text-foreground mb-4 leading-tight break-words">{cleanName}</h1>
+              );
+            })()}
+            <p className="text-muted-foreground leading-relaxed mb-6 whitespace-pre-wrap text-xs sm:text-sm md:text-base break-words">{getTranslated(pack, "long_description", lang) || getTranslated(pack, "description", lang)}</p>
+            <div className="flex items-baseline gap-3 sm:gap-4 mb-8">
               {discount > 0 ? (
                 <>
-                  <span className="text-3xl font-sans font-bold text-destructive tracking-tight">
-                    {discountedPrice.toLocaleString()}<span className="text-lg font-medium text-muted-foreground/70 ml-1.5">DH</span>
+                  <span className="text-2xl sm:text-3xl font-sans font-bold text-destructive tracking-tight">
+                    {discountedPrice.toLocaleString()}<span className="text-base sm:text-lg font-medium text-muted-foreground/70 ml-1.5">DH</span>
                   </span>
-                  <span className="text-lg font-sans text-muted-foreground line-through opacity-60">
-                    {pack.price.toLocaleString()}<span className="text-sm ml-1">DH</span>
+                  <span className="text-base sm:text-lg font-sans text-muted-foreground line-through opacity-60">
+                    {pack.price.toLocaleString()}<span className="text-xs sm:text-sm ml-1">DH</span>
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="text-3xl font-sans font-bold text-foreground tracking-tight">
-                    {pack.price.toLocaleString()}<span className="text-lg font-medium text-muted-foreground/70 ml-1.5">DH</span>
+                  <span className="text-2xl sm:text-3xl font-sans font-bold text-foreground tracking-tight">
+                    {pack.price.toLocaleString()}<span className="text-base sm:text-lg font-medium text-muted-foreground/70 ml-1.5">DH</span>
                   </span>
                   {savings > 0 && (
-                    <span className="text-lg font-sans text-muted-foreground line-through opacity-60">
-                      {totalValue.toLocaleString()}<span className="text-sm ml-1">DH</span>
+                    <span className="text-base sm:text-lg font-sans text-muted-foreground line-through opacity-60">
+                      {totalValue.toLocaleString()}<span className="text-xs sm:text-sm ml-1">DH</span>
                     </span>
                   )}
                 </>
               )}
             </div>
             <div className="mb-8">
-              <h3 className="text-sm font-semibold tracking-[0.1em] uppercase text-foreground mb-4">
+              <h3 className="text-xs sm:text-sm font-semibold tracking-[0.1em] uppercase text-foreground mb-4">
                 {t("pack.contents")} ({pack.items.length} {t("pack.productsCount")})
               </h3>
               <div className="space-y-3">
                 {pack.items.map((item) => {
                   const itemTranslatedName = getTranslated({ name: item.product_name, name_ar: item.product_name_ar, name_en: item.product_name_en }, "name", lang);
                   return (
-                    <div key={item.id} className="flex items-center gap-4 p-3 border border-border rounded-lg">
-                      <img src={item.product_image || "/placeholder.svg"} alt={itemTranslatedName} className="w-14 h-14 object-cover rounded" />
+                    <div key={item.id} className="flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 border border-border rounded-lg">
+                      <img src={item.product_image || "/placeholder.svg"} alt={itemTranslatedName} className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{itemTranslatedName}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs sm:text-sm font-medium text-foreground truncate">{itemTranslatedName}</p>
+                        <p className="text-[11px] sm:text-xs text-muted-foreground">
                           {t("common.netWeight")}: {item.selected_weight || item.product_weight || "Standard"}
                         </p>
                         
@@ -347,38 +355,44 @@ const PackDetail = () => {
                           </div>
                         )}
                       </div>
-                      <span className="text-sm text-muted-foreground">{getItemPrice(item).toLocaleString()} DH</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground font-medium shrink-0">{getItemPrice(item).toLocaleString()} DH</span>
                     </div>
                   );
                 })}
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} />
-              <Button size="lg" className="flex-1 w-full rounded-none text-sm tracking-[0.15em] uppercase py-6" onClick={handleAddToCart}>
-                <ShoppingBag className="w-4 h-4 ltr:mr-2 rtl:ml-2" />{t("common.addToCart")}
+            <div className="flex items-center gap-2 sm:gap-4 w-full">
+              <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} className="h-12 sm:h-14 shrink-0 bg-background" />
+              <Button size="lg" className="flex-1 rounded-none text-xs sm:text-sm tracking-[0.1em] sm:tracking-[0.15em] uppercase h-12 sm:h-14 py-0 flex items-center justify-center gap-2 btn-premium" onClick={handleAddToCart}>
+                <ShoppingBag className="w-4 h-4 shrink-0" />
+                <span className="truncate">{t("common.addToCart")}</span>
               </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              <Button variant="outline" size="lg" className="rounded-none flex-1 py-6 text-sm tracking-[0.1em] uppercase" onClick={handleWishlistToggle}>
-                <Heart className={cn("w-4 h-4 ltr:mr-3 rtl:ml-3 transition-all duration-300", inWishlist && "fill-primary text-primary")} />
-                {inWishlist ? t("productDetail.saved") : t("productDetail.addToFavorites")}
+            <div className="grid grid-cols-[1fr_auto] gap-3 mt-3 w-full">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="rounded-none h-12 sm:h-14 text-xs sm:text-sm tracking-[0.05em] uppercase px-3 sm:px-4" 
+                onClick={handleWishlistToggle}
+              >
+                <Heart className={cn("w-4 h-4 ltr:mr-2 rtl:ml-2 shrink-0 transition-all duration-300", inWishlist && "fill-primary text-primary")} />
+                <span className="truncate">{inWishlist ? t("productDetail.saved") : t("productDetail.addToFavorites")}</span>
               </Button>
 
               <Button
                 variant="outline"
                 size="lg"
-                className="rounded-none flex-1 py-6 text-sm tracking-[0.1em] uppercase border-[#25D366] text-[#25D366] hover:bg-[#25D366]/5 transition-colors"
+                className="w-12 sm:w-16 rounded-none h-12 sm:h-14 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all duration-300 shrink-0 group flex items-center justify-center p-0"
                 onClick={() => {
                   const phone = "212699928463";
                   const url = window.location.href;
                   const message = encodeURIComponent(`Bonjour Aliaa Care, j'aimerais avoir plus d'informations sur le pack : ${getTranslated(pack, "name", lang)}\nPrix : ${pack.price} DH\nLien : ${url}`);
                   window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
                 }}
+                title={t("productDetail.whatsappQuestion")}
               >
-                <WhatsAppIcon className="w-4 h-4 ltr:mr-3 rtl:ml-3" />
-                Question WhatsApp
+                <WhatsAppIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
               </Button>
             </div>
           </motion.div>

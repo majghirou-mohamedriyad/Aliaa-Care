@@ -6,6 +6,7 @@ import { Footer } from "../Footer";
 import { CustomCursor } from "../CustomCursor";
 import { ScrollToTopButton } from "../ScrollToTopButton";
 import { WhatsAppButton } from "../WhatsAppButton";
+import { FloatingCartButton } from "../FloatingCartButton";
 import { useLanguage } from "@/hooks/useLanguage";
 
 interface LayoutProps {
@@ -43,6 +44,7 @@ export const ClientLayout = () => {
         <Outlet />
       </motion.main>
       <Footer />
+      <FloatingCartButton />
       <ScrollToTopButton />
       <WhatsAppButton />
     </div>
