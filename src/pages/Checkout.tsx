@@ -34,6 +34,14 @@ const Checkout = () => {
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
   const [promoError, setPromoError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+  }>({});
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     address: "", region: "", city: "", postalCode: "", country: "Maroc", notes: "",
@@ -127,6 +135,9 @@ const Checkout = () => {
     if (name === "email") {
       setEmailError("");
     }
+    if (fieldErrors[name as keyof typeof fieldErrors]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleApplyPromo = async () => {
@@ -168,8 +179,36 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation for required fields
-    if (!formData.firstName || !formData.lastName || !formData.phone || !formData.address || !formData.city) {
+    const newErrors: typeof fieldErrors = {};
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = t("checkout.fieldRequired");
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = t("checkout.fieldRequired");
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = t("checkout.fieldRequired");
+    } else if (formData.phone.length !== 10) {
+      newErrors.phone = t("checkout.phoneInvalid");
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = t("checkout.fieldRequired");
+    }
+    if (!formData.city.trim()) {
+      newErrors.city = t("checkout.fieldRequired");
+    }
+
+    if (formData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = t("checkout.emailInvalid");
+        setEmailError(t("checkout.emailInvalid"));
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
       toast({
         title: t("checkout.orderError"),
         description: t("checkout.requiredFields"),
@@ -178,29 +217,7 @@ const Checkout = () => {
       return;
     }
 
-    // Validate phone number length (must be 10 digits)
-    if (formData.phone.length !== 10) {
-      toast({
-        title: t("checkout.orderError"),
-        description: t("checkout.phoneInvalid"),
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Email validation (only if provided)
-    if (formData.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        setEmailError(t("checkout.emailInvalid"));
-        toast({
-          title: t("checkout.orderError"),
-          description: t("checkout.emailInvalid"),
-          variant: "destructive"
-        });
-        return;
-      }
-    }
+    setFieldErrors({});
     setEmailError("");
 
     setIsSubmitting(true);
@@ -329,11 +346,13 @@ const Checkout = () => {
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-xs font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-2">{t("checkout.firstName")} *</label>
-                      <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required maxLength={50} className="rounded-none h-12" autoComplete="given-name" />
+                      <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required maxLength={50} className={cn("rounded-none h-12", fieldErrors.firstName && "border-destructive focus-visible:ring-destructive")} autoComplete="given-name" />
+                      {fieldErrors.firstName && <p className="text-xs text-destructive mt-1.5 font-medium">{fieldErrors.firstName}</p>}
                     </div>
                     <div>
                       <label htmlFor="lastName" className="block text-xs font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-2">{t("checkout.lastName")} *</label>
-                      <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} required maxLength={50} className="rounded-none h-12" autoComplete="family-name" />
+                      <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} required maxLength={50} className={cn("rounded-none h-12", fieldErrors.lastName && "border-destructive focus-visible:ring-destructive")} autoComplete="family-name" />
+                      {fieldErrors.lastName && <p className="text-xs text-destructive mt-1.5 font-medium">{fieldErrors.lastName}</p>}
                     </div>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4 mt-4">
@@ -341,12 +360,13 @@ const Checkout = () => {
                       <label htmlFor="email" className="block text-xs font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-2">
                         {t("checkout.email")} <span className="text-muted-foreground/50 lowercase tracking-normal">({t("common.optional")})</span>
                       </label>
-                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} maxLength={100} className={cn("rounded-none h-12", emailError && "border-destructive focus-visible:ring-destructive")} autoComplete="email" />
-                      {emailError && <p className="text-xs text-destructive mt-1.5">{emailError}</p>}
+                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} maxLength={100} className={cn("rounded-none h-12", (emailError || fieldErrors.email) && "border-destructive focus-visible:ring-destructive")} autoComplete="email" />
+                      {(emailError || fieldErrors.email) && <p className="text-xs text-destructive mt-1.5">{emailError || fieldErrors.email}</p>}
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-xs font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-2">{t("checkout.phone")} *</label>
-                      <Input id="phone" name="phone" type="tel" inputMode="numeric" value={formData.phone} onChange={handleInputChange} required maxLength={10} className="rounded-none h-12 w-full" placeholder="0612345678" autoComplete="tel" />
+                      <Input id="phone" name="phone" type="tel" inputMode="numeric" value={formData.phone} onChange={handleInputChange} required maxLength={10} className={cn("rounded-none h-12 w-full", fieldErrors.phone && "border-destructive focus-visible:ring-destructive")} placeholder="0612345678" autoComplete="tel" />
+                      {fieldErrors.phone && <p className="text-xs text-destructive mt-1.5 font-medium">{fieldErrors.phone}</p>}
                     </div>
                   </div>
                 </div>
@@ -356,7 +376,8 @@ const Checkout = () => {
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="address" className="block text-xs font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-2">{t("checkout.address")} *</label>
-                      <Input id="address" name="address" value={formData.address} onChange={handleInputChange} required maxLength={200} className="rounded-none h-12" autoComplete="street-address" />
+                      <Input id="address" name="address" value={formData.address} onChange={handleInputChange} required maxLength={200} className={cn("rounded-none h-12", fieldErrors.address && "border-destructive focus-visible:ring-destructive")} autoComplete="street-address" />
+                      {fieldErrors.address && <p className="text-xs text-destructive mt-1.5 font-medium">{fieldErrors.address}</p>}
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="relative">
@@ -366,13 +387,17 @@ const Checkout = () => {
                         {/* Selected value button */}
                         <div
                           onClick={() => setIsOpen(!isOpen)}
-                          className="w-full bg-background border border-border px-4 h-12 text-sm flex items-center justify-between cursor-pointer select-none"
+                          className={cn(
+                            "w-full bg-background border px-4 h-12 text-sm flex items-center justify-between cursor-pointer select-none",
+                            fieldErrors.city ? "border-destructive focus:ring-destructive" : "border-border"
+                          )}
                         >
                           <span className={formData.city ? "text-foreground" : "text-muted-foreground"}>
                             {formData.city || "Sélectionner une ville"}
                           </span>
                           <span className="text-muted-foreground text-xs">▼</span>
                         </div>
+                        {fieldErrors.city && <p className="text-xs text-destructive mt-1.5 font-medium">{fieldErrors.city}</p>}
 
                         {isOpen && (
                           <>

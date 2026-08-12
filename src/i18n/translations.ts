@@ -207,6 +207,7 @@ const translations = {
   "checkout.promoNotApplicable": { fr: "Ce code ne s'applique pas aux articles de votre panier", en: "This code does not apply to items in your cart", ar: "هذا الرمز لا ينطبق على العناصر الموجودة في سلتك" },
   "checkout.emailInvalid": { fr: "Veuillez entrer une adresse email valide.", en: "Please enter a valid email address.", ar: "يرجى إدخال عنوان بريد إلكتروني صالح." },
   "checkout.requiredFields": { fr: "Veuillez remplir tous les champs obligatoires (*).", en: "Please fill in all required fields (*).", ar: "يرجى ملء جميع الحقول المطلوبة (*)." },
+  "checkout.fieldRequired": { fr: "Ce champ est obligatoire (*).", en: "This field is required (*).", ar: "هذا الحقل مطلوب (*)." },
   "checkout.phoneInvalid": { fr: "Le numéro de téléphone doit comporter 10 chiffres (ex: 0612345678).", en: "Phone number must contain 10 digits (e.g. 0612345678).", ar: "يجب أن يتكون رقم الهاتف من 10 أرقام (مثال: 0612345678)." },
 
   // Wishlist
