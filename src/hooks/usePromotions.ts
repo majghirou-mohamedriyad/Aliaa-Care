@@ -121,8 +121,12 @@ export function useCreatePromotion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: Omit<Promotion, "id" | "created_at">) => {
-      const { error } = await supabase.from("promotions").insert(input as unknown as Promotion);
-      if (error) throw error;
+      const { data, error } = await supabase.from("promotions").insert(input as unknown as Promotion).select();
+      if (error) {
+        console.error("Supabase create promotion error:", error);
+        throw new Error(error.message || error.details || error.hint || JSON.stringify(error));
+      }
+      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["promotions"] }),
   });
@@ -133,7 +137,10 @@ export function useUpdatePromotion() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Promotion> & { id: string }) => {
       const { error } = await supabase.from("promotions").update(updates as unknown as Partial<Promotion>).eq("id", id);
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase update promotion error:", error);
+        throw new Error(error.message || error.details || error.hint || JSON.stringify(error));
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["promotions"] }),
   });
@@ -144,7 +151,10 @@ export function useDeletePromotion() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("promotions").delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase delete promotion error:", error);
+        throw new Error(error.message || error.details || JSON.stringify(error));
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["promotions"] }),
   });
@@ -155,7 +165,10 @@ export function useBulkDeletePromotions() {
   return useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("promotions").delete().in("id", ids);
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase bulk delete promotion error:", error);
+        throw new Error(error.message || error.details || JSON.stringify(error));
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["promotions"] }),
   });

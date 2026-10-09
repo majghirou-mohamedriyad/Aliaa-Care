@@ -36,8 +36,12 @@ const translations = {
   "common.unavailable": { fr: "Indisponible", en: "Unavailable", ar: "غير متوفر" },
   "common.outOfStockShort": { fr: "Rupture", en: "OOS", ar: "نفذ" },
   "common.help": { fr: "Aide", en: "Help", ar: "مساعدة" },
+  "common.search": { fr: "Rechercher", en: "Search", ar: "بحث" },
 
   // Header
+  "header.searchPlaceholder": { fr: "Rechercher un produit, un pack...", en: "Search for a product, pack...", ar: "ابحث عن منتج أو باقة..." },
+  "header.searchSuggestions": { fr: "Suggestions populaires", en: "Popular suggestions", ar: "اقتراحات شائعة" },
+  "header.searchNoResults": { fr: "Aucun produit ou pack trouvé", en: "No products or packs found", ar: "لم يتم العثور على أي منتج أو باقة" },
   "header.wishlistEmpty": { fr: "Votre liste de souhaits est vide", en: "Your wishlist is empty", ar: "قائمة أمنياتك فارغة" },
   "header.savedItems": { fr: "article(s) sauvegardé(s)", en: "saved item(s)", ar: "عنصر(عناصر) محفوظة" },
   "header.more": { fr: "de plus", en: "more", ar: "المزيد" },

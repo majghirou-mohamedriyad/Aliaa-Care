@@ -77,19 +77,28 @@ const AdminPromotions = () => {
   const [productXSearchOpen, setProductXSearchOpen] = useState(false);
   const [productYSearchOpen, setProductYSearchOpen] = useState(false);
 
+  const action = searchParams.get("action");
+  const id = searchParams.get("id");
+
   // Sync dialog state with URL
-  const dialogOpen = searchParams.get("action") === "edit" || searchParams.get("action") === "new";
+  const dialogOpen = action === "edit" || action === "new";
 
   useEffect(() => {
-    const action = searchParams.get("action");
-    const id = searchParams.get("id");
-    
+    if (!dialogOpen) {
+      setEditing(null);
+      return;
+    }
+
     const draftKey = `promo_draft_${action}_${id || 'new'}`;
     const savedDraft = localStorage.getItem(draftKey);
 
     if (savedDraft) {
-      setForm(JSON.parse(savedDraft));
-      return;
+      try {
+        setForm(JSON.parse(savedDraft));
+        return;
+      } catch {
+        localStorage.removeItem(draftKey);
+      }
     }
 
     if (action === "new") {
@@ -103,8 +112,8 @@ const AdminPromotions = () => {
           name: p.name,
           type: p.type,
           discount_percent: p.discount_percent,
-          starts_at: p.starts_at.slice(0, 16),
-          ends_at: p.ends_at.slice(0, 16),
+          starts_at: p.starts_at ? p.starts_at.slice(0, 16) : new Date().toISOString().slice(0, 16),
+          ends_at: p.ends_at ? p.ends_at.slice(0, 16) : new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16),
           is_flash: p.is_flash,
           buy_quantity: p.buy_quantity || 2,
           get_quantity: p.get_quantity || 1,
@@ -121,25 +130,22 @@ const AdminPromotions = () => {
           active: p.active,
         });
       }
-    } else if (!action) {
-      setEditing(null);
     }
-  }, [searchParams, promotions]);
+  }, [action, id, dialogOpen]);
 
   // Save draft whenever form changes
   useEffect(() => {
-    if (dialogOpen) {
-      const action = searchParams.get("action");
-      const id = searchParams.get("id");
+    if (dialogOpen && action) {
       const draftKey = `promo_draft_${action}_${id || 'new'}`;
       localStorage.setItem(draftKey, JSON.stringify(form));
     }
-  }, [form, dialogOpen, searchParams]);
+  }, [form, dialogOpen, action, id]);
 
   const clearDraft = () => {
-    const action = searchParams.get("action");
-    const id = searchParams.get("id");
-    localStorage.removeItem(`promo_draft_${action}_${id || 'new'}`);
+    if (action) {
+      const draftKey = `promo_draft_${action}_${id || 'new'}`;
+      localStorage.removeItem(draftKey);
+    }
   };
 
   const setDialogOpen = (open: boolean) => {
@@ -219,8 +225,9 @@ const AdminPromotions = () => {
       }
       clearDraft();
       setDialogOpen(false);
-    } catch {
-      toast({ title: "Erreur", variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      toast({ title: "Erreur lors de l'enregistrement", description: msg, variant: "destructive" });
     }
   };
 

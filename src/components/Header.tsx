@@ -1,10 +1,11 @@
-import { Heart, Menu, X, Settings, Globe, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Heart, Menu, X, Settings, Globe, User, LogOut, LayoutDashboard, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWishlist } from "@/hooks/useWishlist";
 import { CartIcon } from "@/components/CartIcon";
+import { SearchDialog } from "@/components/SearchDialog";
 import { useClientProducts } from "@/hooks/useClientProducts";
 import { useT } from "@/hooks/useT";
 import { useBanner } from "@/hooks/useBanner";
@@ -39,6 +40,7 @@ const langOptions: { code: Language; label: string; flag: string }[] = [
 ];
 
 export const Header = () => {
+  const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { items } = useWishlist();
@@ -154,10 +156,27 @@ export const Header = () => {
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Search Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="p-2 hover:bg-accent rounded-full transition-colors duration-300 group flex items-center justify-center text-foreground"
+                  aria-label={t("common.search")}
+                >
+                  <Search className="w-4 h-4 md:w-5 md:h-5 transition-transform duration-300 group-hover:scale-110" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p className="text-xs">{t("common.search")} (Ctrl+K)</p>
+              </TooltipContent>
+            </Tooltip>
+
             {/* Language Switcher */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="p-2 hover:bg-accent transition-colors duration-300 group flex items-center gap-1">
+              <DropdownMenuTrigger className="p-2 hover:bg-accent rounded-md transition-colors duration-300 group flex items-center gap-1">
                 <Globe className="w-4 h-4" />
                 <span className="text-xs font-medium uppercase">{language}</span>
               </DropdownMenuTrigger>
@@ -177,7 +196,7 @@ export const Header = () => {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link to="/wishlist" className="relative p-2 hover:bg-accent transition-colors duration-300 group">
+                <Link to="/wishlist" className="relative p-2 hover:bg-accent rounded-md transition-colors duration-300 group">
                   <Heart className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
                   <AnimatePresence>
                     {items.length > 0 && (
@@ -211,7 +230,7 @@ export const Header = () => {
             <CartIcon />
 
             <button
-              className="md:hidden p-2 hover:bg-accent transition-colors duration-300"
+              className="md:hidden p-2 hover:bg-accent rounded-md transition-colors duration-300"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <AnimatePresence mode="wait">
@@ -229,12 +248,30 @@ export const Header = () => {
           </div>
         </div>
 
+        {/* Search Modal */}
+        <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+
         {/* Mobile Menu */}
         <div
           className={`md:hidden border-t border-border overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
             }`}
         >
-          <div className="py-8 space-y-6">
+          <div className="py-6 space-y-5">
+            {/* Mobile Search Input Trigger */}
+            <div className="px-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setSearchOpen(true);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground text-xs font-medium border border-border/60 transition-colors"
+              >
+                <Search className="w-4 h-4 text-primary" />
+                <span>{t("header.searchPlaceholder")}</span>
+              </button>
+            </div>
+
             <div className="space-y-1">
               <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground/50 px-2 mb-3">{t("common.collections")}</p>
               {collections.map((collection) => (
