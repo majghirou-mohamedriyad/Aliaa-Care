@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, useBulkDeleteProducts, useToggleProductActive, uploadProductImage, DbProduct } from "@/hooks/useProducts";
+import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, useBulkDeleteProducts, useToggleProductActive, useToggleProductFreeShipping, uploadProductImage, DbProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, AlertTriangle, Package, Upload, X, Loader2, Search, Globe, ChevronLeft, ChevronRight, Star, LayoutGrid, List } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Package, Upload, X, Loader2, Search, Globe, ChevronLeft, ChevronRight, Star, LayoutGrid, List, Truck } from "lucide-react";
 
 interface EditingProduct {
   id?: string;
@@ -47,6 +47,7 @@ interface EditingProduct {
   visible: boolean;
   featured: boolean;
   is_new: boolean;
+  free_shipping: boolean;
   images: string[];
   category_ids: string[];
   flavors: string[];
@@ -59,7 +60,7 @@ const emptyProduct: EditingProduct = {
   materials: "", name_ar: "", name_en: "", description_ar: "", description_en: "",
   long_description_ar: "", long_description_en: "", materials_ar: "", materials_en: "",
   weight: undefined, weight_prices: [], images: [], stock: 10, active: true, visible: true,
-  featured: false, is_new: false, category_ids: [], flavors: [], flavors_ar: [], flavors_en: [],
+  featured: false, is_new: false, free_shipping: false, category_ids: [], flavors: [], flavors_ar: [], flavors_en: [],
 };
 
 const AdminProducts = () => {
@@ -70,6 +71,7 @@ const AdminProducts = () => {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
   const toggleActive = useToggleProductActive();
+  const toggleFreeShipping = useToggleProductFreeShipping();
   const { toast } = useToast();
   const [editingProduct, setEditingProduct] = useState<EditingProduct | null>(null);
   const [search, setSearch] = useState("");
@@ -132,6 +134,7 @@ const AdminProducts = () => {
           visible: p.visible,
           featured: p.featured ?? false,
           is_new: p.is_new ?? false,
+          free_shipping: p.free_shipping ?? false,
           images: p.images,
           category_ids: p.category_ids,
           flavors: p.flavors || [],
@@ -274,6 +277,7 @@ const AdminProducts = () => {
             visible: editingProduct.visible,
             featured: editingProduct.featured,
             is_new: editingProduct.is_new,
+            free_shipping: editingProduct.free_shipping,
             flavors: cleanedFlavors,
             flavors_ar: cleanedFlavorsAr,
             flavors_en: cleanedFlavorsEn,
@@ -305,6 +309,7 @@ const AdminProducts = () => {
           visible: editingProduct.visible,
           featured: editingProduct.featured,
           is_new: editingProduct.is_new,
+          free_shipping: editingProduct.free_shipping,
           flavors: cleanedFlavors,
           flavors_ar: cleanedFlavorsAr,
           flavors_en: cleanedFlavorsEn,
@@ -359,6 +364,10 @@ const AdminProducts = () => {
 
   const handleToggleActive = (id: string, current: boolean) => {
     toggleActive.mutate({ id, active: !current });
+  };
+
+  const handleToggleFreeShipping = (id: string, current: boolean) => {
+    toggleFreeShipping.mutate({ id, free_shipping: !current });
   };
 
   if (isLoading) {
@@ -479,6 +488,7 @@ const AdminProducts = () => {
                     <th className="text-left p-3 font-medium">Catégories</th>
                     <th className="text-right p-3 font-medium">Prix</th>
                     <th className="text-right p-3 font-medium">Stock</th>
+                    <th className="text-center p-3 font-medium">Livraison</th>
                     <th className="text-center p-3 font-medium">Actif</th>
                     <th className="text-right p-3 font-medium">Actions</th>
                   </tr>
@@ -499,11 +509,18 @@ const AdminProducts = () => {
                           <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-10 h-10 rounded object-cover" />
                           <div>
                             <p className="font-medium">{p.name}</p>
-                            {p.stock === 0 ? (
-                              <Badge variant="destructive" className="text-[10px] mt-0.5">Rupture de stock</Badge>
-                            ) : p.stock < 5 && p.active && (
-                              <Badge variant="outline" className="text-[10px] mt-0.5 text-amber-600 border-amber-200 bg-amber-50">Stock faible</Badge>
-                            )}
+                            <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                              {p.free_shipping && (
+                                <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white gap-1 py-0 px-1.5 shadow-sm">
+                                  <Truck className="w-2.5 h-2.5" /> Livraison gratuite
+                                </Badge>
+                              )}
+                              {p.stock === 0 ? (
+                                <Badge variant="destructive" className="text-[10px]">Rupture de stock</Badge>
+                              ) : p.stock < 5 && p.active && (
+                                <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200 bg-amber-50">Stock faible</Badge>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="p-3 text-muted-foreground">
@@ -514,6 +531,22 @@ const AdminProducts = () => {
                           <span className={p.stock === 0 ? "text-destructive font-bold" : p.stock < 5 ? "text-amber-600 font-medium" : ""}>
                             {p.stock === 0 ? "Épuisé" : p.stock}
                           </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFreeShipping(p.id, !!p.free_shipping)}
+                            className="inline-flex items-center gap-1 cursor-pointer transition-transform active:scale-95"
+                            title={p.free_shipping ? "Désactiver la livraison gratuite" : "Activer la livraison gratuite"}
+                          >
+                            {p.free_shipping ? (
+                              <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 text-[10px] py-0.5 px-2">
+                                <Truck className="w-3 h-3" /> Gratuite
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground/60 hover:text-foreground">Standard</span>
+                            )}
+                          </button>
                         </td>
                         <td className="p-3 text-center">
                           <Switch checked={p.active} onCheckedChange={() => handleToggleActive(p.id, p.active)} />
@@ -552,7 +585,12 @@ const AdminProducts = () => {
                       <img src={p.images[0] || "/placeholder.svg"} alt={p.name} className="w-14 h-14 rounded object-cover shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm leading-snug line-clamp-2">{p.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{productCats.map((c) => c?.name).join(", ")}</p>
+                        {p.free_shipping && (
+                          <Badge className="text-[10px] bg-emerald-600 text-white gap-1 py-0 px-1.5 mt-1 w-fit">
+                            <Truck className="w-2.5 h-2.5" /> Livraison gratuite
+                          </Badge>
+                        )}
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{productCats.map((c) => c?.name).join(", ")}</p>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-sm font-medium">{p.price} DH</span>
                           <span className={`text-xs ${p.stock === 0 ? "text-destructive font-bold" : p.stock < 5 ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
@@ -606,6 +644,11 @@ const AdminProducts = () => {
                           <Badge variant="destructive" className="absolute top-2 right-2 text-[10px]">Rupture</Badge>
                         ) : p.stock < 5 && p.active && (
                           <Badge className="absolute top-2 right-2 text-[10px] bg-amber-500 hover:bg-amber-600 text-white">Stock faible</Badge>
+                        )}
+                        {p.free_shipping && (
+                          <Badge className="absolute bottom-2 left-2 text-[10px] bg-emerald-600 text-white gap-1 shadow-sm">
+                            <Truck className="w-3 h-3" /> Livraison Gratuite
+                          </Badge>
                         )}
                       </div>
                       <div>
@@ -702,6 +745,27 @@ const AdminProducts = () => {
                           <span className="text-xs text-muted-foreground">{editingProduct.active ? "Actif" : "Inactif"}</span>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="p-3 border border-border/80 rounded-lg bg-muted/15 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          <label 
+                            className="text-sm font-medium cursor-pointer" 
+                            onClick={() => setEditingProduct({ ...editingProduct, free_shipping: !editingProduct.free_shipping })}
+                          >
+                            Livraison Gratuite
+                          </label>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Offrir la livraison pour ce produit et afficher le tag "Livraison Gratuite"
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={editingProduct.free_shipping} 
+                        onCheckedChange={(checked) => setEditingProduct({ ...editingProduct, free_shipping: checked })} 
+                      />
                     </div>
                     
                     <div>

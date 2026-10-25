@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, AlertCircle, Tag, Check, X, Loader2 } from "lucide-react";
+import { ArrowRight, AlertCircle, Tag, Check, X, Loader2, Truck } from "lucide-react";
 
 import { useCart } from "@/hooks/useCart";
 import { Button } from "@/components/ui/button";
@@ -91,7 +91,8 @@ const Checkout = () => {
   const selectedCity = livraisonData.find(c => c.nom === formData.city);
   const baseShipping = selectedCity ? selectedCity.livraison : 45;
   const freeShippingThreshold = Number(banner?.free_shipping_threshold ?? 500);
-  const isFreeDelivery = afterDiscount >= freeShippingThreshold;
+  const hasFreeShippingItem = items.some(item => !!item.product.free_shipping);
+  const isFreeDelivery = afterDiscount >= freeShippingThreshold || hasFreeShippingItem;
 
   const shipping = isFreeDelivery ? 0 : (formData.city === "" ? 0 : baseShipping);
 
@@ -495,6 +496,12 @@ const Checkout = () => {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-0.5">{t("checkout.qty")} : {item.quantity}</p>
+                        {item.product.free_shipping && (
+                          <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+                            <Truck className="w-3 h-3 shrink-0" />
+                            <span>{t("common.freeShipping")}</span>
+                          </div>
+                        )}
                         {(() => {
                           let price = item.product.price;
                           if (item.selectedWeight && (item.product as any).weight_prices) {
@@ -563,15 +570,25 @@ const Checkout = () => {
                       <span>-{discount.toLocaleString()} DH</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("cart.shipping")}</span>
-                    <span>
-                      {isFreeDelivery
-                        ? t("cart.free")
-                        : (formData.city === ""
-                          ? (lang === 'ar' ? "حسب المدينة" : lang === 'en' ? "Depending on city" : "Selon ville")
-                          : `${shipping} DH`)}
-                    </span>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t("cart.shipping")}</span>
+                      <span>
+                        {isFreeDelivery
+                          ? t("cart.free")
+                          : (formData.city === ""
+                            ? (lang === 'ar' ? "حسب المدينة" : lang === 'en' ? "Depending on city" : "Selon ville")
+                            : `${shipping} DH`)}
+                      </span>
+                    </div>
+                    {isFreeDelivery && (
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                        <Truck className="w-3 h-3 shrink-0" />
+                        {hasFreeShippingItem 
+                          ? t("checkout.freeShippingApplied")
+                          : (lang === 'ar' ? `توصيل مجاني (أكثر من ${freeShippingThreshold} درهم)` : lang === 'en' ? `Free delivery (over ${freeShippingThreshold} DH)` : `Livraison gratuite (dès ${freeShippingThreshold} DH)`)}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="border-t border-border pt-4">

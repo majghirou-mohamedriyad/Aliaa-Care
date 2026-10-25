@@ -24,6 +24,7 @@ export interface DbProduct {
   cost_price: number | null;
   featured: boolean | null;
   is_new: boolean | null;
+  free_shipping?: boolean | null;
   flavors: string[] | null;
   flavors_ar?: string[] | null;
   flavors_en?: string[] | null;
@@ -82,6 +83,7 @@ export function useAddProduct() {
       cost_price?: number;
       featured?: boolean;
       is_new?: boolean;
+      free_shipping?: boolean;
       flavors?: string[];
       flavors_ar?: string[];
       flavors_en?: string[];
@@ -125,7 +127,7 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      updates: Partial<{ active: boolean; cost_price: number | null; description: string | null; description_ar: string | null; description_en: string | null; featured: boolean | null; is_new: boolean | null; long_description: string | null; long_description_ar: string | null; long_description_en: string | null; materials: string | null; materials_ar: string | null; materials_en: string | null; name: string; name_ar: string | null; name_en: string | null; original_price: number | null; price: number; slug: string; stock: number; visible: boolean; weight: string | number | null; weight_prices: { weight: string | number; price: number }[] | null; flavors: string[] | null; flavors_ar: string[] | null; flavors_en: string[] | null }>;
+      updates: Partial<{ active: boolean; cost_price: number | null; description: string | null; description_ar: string | null; description_en: string | null; featured: boolean | null; is_new: boolean | null; free_shipping: boolean | null; long_description: string | null; long_description_ar: string | null; long_description_en: string | null; materials: string | null; materials_ar: string | null; materials_en: string | null; name: string; name_ar: string | null; name_en: string | null; original_price: number | null; price: number; slug: string; stock: number; visible: boolean; weight: string | number | null; weight_prices: { weight: string | number; price: number }[] | null; flavors: string[] | null; flavors_ar: string[] | null; flavors_en: string[] | null }>;
       images?: string[];
       category_ids?: string[];
     }) => {
@@ -181,6 +183,17 @@ export function useToggleProductActive() {
   return useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
       const { error } = await supabase.from("products").update({ active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
+  });
+}
+
+export function useToggleProductFreeShipping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, free_shipping }: { id: string; free_shipping: boolean }) => {
+      const { error } = await supabase.from("products").update({ free_shipping }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),

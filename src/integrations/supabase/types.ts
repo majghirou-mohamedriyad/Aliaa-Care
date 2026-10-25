@@ -229,6 +229,7 @@ export type Database = {
           created_at: string
           description: string | null
           featured: boolean | null
+          free_shipping: boolean | null
           id: string
           image: string | null
           long_description: string | null
@@ -241,6 +242,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           featured?: boolean | null
+          free_shipping?: boolean | null
           id?: string
           image?: string | null
           long_description?: string | null
@@ -253,6 +255,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           featured?: boolean | null
+          free_shipping?: boolean | null
           id?: string
           image?: string | null
           long_description?: string | null
@@ -332,6 +335,7 @@ export type Database = {
           description: string | null
           featured: boolean | null
           flavors: string[] | null
+          free_shipping: boolean | null
           id: string
           is_new: boolean | null
           long_description: string | null
@@ -353,6 +357,7 @@ export type Database = {
           description?: string | null
           featured?: boolean | null
           flavors?: string[] | null
+          free_shipping?: boolean | null
           id?: string
           is_new?: boolean | null
           long_description?: string | null
@@ -374,6 +379,7 @@ export type Database = {
           description?: string | null
           featured?: boolean | null
           flavors?: string[] | null
+          free_shipping?: boolean | null
           id?: string
           is_new?: boolean | null
           long_description?: string | null

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { usePacks, useAddPack, useUpdatePack, useDeletePack, useBulkDeletePacks, useTogglePackActive, DbPack } from "@/hooks/usePacks";
+import { usePacks, useAddPack, useUpdatePack, useDeletePack, useBulkDeletePacks, useTogglePackActive, useTogglePackFreeShipping, DbPack } from "@/hooks/usePacks";
 import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/utils/imageCompression";
@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Package, Loader2, Search, X, AlertTriangle, Upload, ImageIcon, Globe, ChevronLeft, ChevronRight, Star, LayoutGrid, List } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Search, X, AlertTriangle, Upload, ImageIcon, Globe, ChevronLeft, ChevronRight, Star, LayoutGrid, List, Truck } from "lucide-react";
 
 interface EditingPack {
   id?: string;
@@ -37,6 +37,7 @@ interface EditingPack {
   images: string[];
   active: boolean;
   featured: boolean;
+  free_shipping: boolean;
   items: { product_id: string; quantity: number; selected_weight?: string | null }[];
   name_ar: string;
   name_en: string;
@@ -48,7 +49,7 @@ interface EditingPack {
 
 const emptyPack: EditingPack = {
   name: "", slug: "", description: "", long_description: "",
-  price: 0, image: "/placeholder.svg", images: [], active: true, featured: false, items: [],
+  price: 0, image: "/placeholder.svg", images: [], active: true, featured: false, free_shipping: false, items: [],
   name_ar: "", name_en: "", description_ar: "", description_en: "",
   long_description_ar: "", long_description_en: "",
 };
@@ -72,6 +73,7 @@ const AdminPacks = () => {
   const updatePack = useUpdatePack();
   const deletePack = useDeletePack();
   const toggleActive = useTogglePackActive();
+  const toggleFreeShipping = useTogglePackFreeShipping();
   const { toast } = useToast();
   const [editing, setEditing] = useState<EditingPack | null>(null);
   const [search, setSearch] = useState("");
@@ -121,6 +123,7 @@ const AdminPacks = () => {
           long_description: p.long_description, price: p.price, image: p.image,
           images: p.images || [],
           active: p.active, featured: p.featured,
+          free_shipping: p.free_shipping ?? false,
           items: packItems,
           name_ar: p.name_ar || "",
           name_en: p.name_en || "",
@@ -160,6 +163,10 @@ const AdminPacks = () => {
 
   const openNew = () => { setSearchParams({ action: "new" }); };
   const openEdit = (p: DbPack) => { setSearchParams({ action: "edit", id: p.id }); };
+
+  const handleToggleFreeShipping = (id: string, current: boolean) => {
+    toggleFreeShipping.mutate({ id, free_shipping: !current });
+  };
 
   const filtered = packs.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -294,6 +301,7 @@ const AdminPacks = () => {
             image: coverImage, 
             active: editing.active, 
             featured: editing.featured,
+            free_shipping: editing.free_shipping,
             name_ar: editing.name_ar,
             name_en: editing.name_en,
             description_ar: editing.description_ar,
@@ -309,6 +317,7 @@ const AdminPacks = () => {
         await addPack.mutateAsync({
           name: editing.name, slug, description: editing.description, long_description: editing.long_description,
           price: editing.price, image: coverImage, images: editing.images || [], active: editing.active, featured: editing.featured,
+          free_shipping: editing.free_shipping,
           items: editing.items,
           name_ar: editing.name_ar,
           name_en: editing.name_en,
@@ -420,6 +429,7 @@ const AdminPacks = () => {
                     <th className="text-left p-3 font-medium">Pack</th>
                     <th className="text-left p-3 font-medium">Produits</th>
                     <th className="text-right p-3 font-medium">Prix</th>
+                    <th className="text-center p-3 font-medium">Livraison</th>
                     <th className="text-center p-3 font-medium">Actif</th>
                     <th className="text-right p-3 font-medium">Actions</th>
                   </tr>
@@ -446,7 +456,14 @@ const AdminPacks = () => {
                             </div>
                             <div>
                               <p className="font-medium">{p.name}</p>
-                              <p className="text-xs text-muted-foreground">{p.items.length} produits</p>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                <p className="text-xs text-muted-foreground">{p.items.length} produits</p>
+                                {p.free_shipping && (
+                                  <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white gap-1 py-0 px-1.5 shadow-sm">
+                                    <Truck className="w-2.5 h-2.5" /> Livraison gratuite
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -454,6 +471,22 @@ const AdminPacks = () => {
                           {p.items.map((i) => `${i.product_name}${i.selected_weight ? ` (${i.selected_weight})` : ""}`).join(", ")}
                         </td>
                         <td className="p-3 text-right font-medium">{p.price} DH</td>
+                        <td className="p-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFreeShipping(p.id, !!p.free_shipping)}
+                            className="inline-flex items-center gap-1 cursor-pointer transition-transform active:scale-95"
+                            title={p.free_shipping ? "Désactiver la livraison gratuite" : "Activer la livraison gratuite"}
+                          >
+                            {p.free_shipping ? (
+                              <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 text-[10px] py-0.5 px-2">
+                                <Truck className="w-3 h-3" /> Gratuite
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground/60 hover:text-foreground">Standard</span>
+                            )}
+                          </button>
+                        </td>
                         <td className="p-3 text-center">
                           <Switch checked={p.active} onCheckedChange={() => toggleActive.mutate({ id: p.id, active: !p.active })} />
                         </td>
@@ -495,7 +528,12 @@ const AdminPacks = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm leading-snug line-clamp-2">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.items.length} produits · {p.price} DH</p>
+                      {p.free_shipping && (
+                        <Badge className="text-[10px] bg-emerald-600 text-white gap-1 py-0 px-1.5 mt-1 w-fit">
+                          <Truck className="w-2.5 h-2.5" /> Livraison gratuite
+                        </Badge>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5">{p.items.length} produits · {p.price} DH</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-1">
@@ -545,6 +583,11 @@ const AdminPacks = () => {
                           />
                         </div>
                         <Badge className="absolute top-2 right-2 text-[10px] bg-primary text-white">{p.items.length} produits</Badge>
+                        {p.free_shipping && (
+                          <Badge className="absolute bottom-2 left-2 text-[10px] bg-emerald-600 text-white gap-1 shadow-sm">
+                            <Truck className="w-3 h-3" /> Livraison Gratuite
+                          </Badge>
+                        )}
                       </div>
                       <div>
                         <h3 className="font-medium text-sm text-foreground line-clamp-1">{p.name}</h3>
@@ -630,6 +673,10 @@ const AdminPacks = () => {
                           <label className="flex items-center gap-2 text-xs cursor-pointer">
                             <Checkbox checked={editing.featured} onCheckedChange={(v) => setEditing({ ...editing, featured: !!v })} />
                             <span>Mettre en vedette</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-xs cursor-pointer text-emerald-700 dark:text-emerald-400 font-medium">
+                            <Checkbox checked={editing.free_shipping} onCheckedChange={(v) => setEditing({ ...editing, free_shipping: !!v })} />
+                            <span className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5" /> Livraison gratuite</span>
                           </label>
                         </div>
                       </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Package, Sparkles, ArrowRight, Tag } from "lucide-react";
+import { Search, X, Package, Sparkles, ArrowRight, Tag, Truck } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useClientProducts } from "@/hooks/useClientProducts";
 import { usePacks } from "@/hooks/usePacks";
@@ -215,6 +215,12 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
                                 Pack
                               </Badge>
                             )}
+                            {item.free_shipping && (
+                              <span className="text-[9px] px-1 py-0 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-0.5">
+                                <Truck className="w-2.5 h-2.5" />
+                                {lang === 'ar' ? "توصيل مجاني" : "Gratuit"}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -292,6 +298,12 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
                                   {product.price} DH
                                 </span>
                               )}
+                              {product.free_shipping && (
+                                <span className="text-[9px] px-1 py-0 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-0.5">
+                                  <Truck className="w-2.5 h-2.5" />
+                                  {lang === 'ar' ? "توصيل مجاني" : "Gratuit"}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -341,6 +353,12 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
                               {discount > 0 && (
                                 <span className="text-[10px] text-muted-foreground line-through">
                                   {pack.price} DH
+                                </span>
+                              )}
+                              {pack.free_shipping && (
+                                <span className="text-[9px] px-1 py-0 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-0.5">
+                                  <Truck className="w-2.5 h-2.5" />
+                                  {lang === 'ar' ? "توصيل مجاني" : "Gratuit"}
                                 </span>
                               )}
                             </div>

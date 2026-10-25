@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, ShoppingBag, ArrowLeft, MessageSquare, Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, ShoppingBag, ArrowLeft, MessageSquare, Heart, ChevronLeft, ChevronRight, Truck } from "lucide-react";
 
 import { usePacks } from "@/hooks/usePacks";
 import { useCart } from "@/hooks/useCart";
@@ -109,6 +109,7 @@ const PackDetail = () => {
         images: pack.images && pack.images.length > 0 ? pack.images : [firstImage],
         packItemFlavors: selectedPackFlavors[i] || {},
         items: pack.items,
+        free_shipping: pack.free_shipping,
       } as any);
     }
     toast({ title: t("pack.addedToCart"), description: `${getTranslated(pack, "name", lang)} x${quantity}` });
@@ -138,6 +139,7 @@ const PackDetail = () => {
         materials: "",
         images: pack.images && pack.images.length > 0 ? pack.images : [firstImage],
         items: pack.items,
+        free_shipping: pack.free_shipping,
       } as any);
       toast({ title: t("productDetail.addedToFavorites"), description: getTranslated(pack, "name", lang) });
     }
@@ -168,7 +170,7 @@ const PackDetail = () => {
           priceCurrency: "MAD",
           availability: "InStock",
           shippingDetails: {
-            price: discountedPrice >= 500 ? 0 : 40,
+            price: (pack.free_shipping || discountedPrice >= 500) ? 0 : 40,
             currency: "MAD",
             deliveryTimeDays: 3,
           },
@@ -243,6 +245,12 @@ const PackDetail = () => {
               <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-primary text-primary-foreground rounded-sm flex items-center gap-1.5">
                 <Package className="w-3 h-3" />{t("common.pack")}
               </span>
+              {pack.free_shipping && (
+                <span className="px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase bg-emerald-600 text-white rounded-sm flex items-center gap-1.5 shadow-sm">
+                  <Truck className="w-3 h-3" />
+                  {t("common.freeShipping")}
+                </span>
+              )}
               {savings > 0 && (
                 <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.15em] uppercase bg-foreground text-background rounded-sm">
                   {t("common.save")} {savings.toFixed(0)} DH
@@ -394,6 +402,27 @@ const PackDetail = () => {
               >
                 <WhatsAppIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
               </Button>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-border">
+              {pack.free_shipping ? (
+                <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-800/40 p-4 rounded-lg">
+                  <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                      {t("common.freeShipping")}
+                    </p>
+                    <p className="text-xs text-emerald-700/90 dark:text-emerald-400/90 mt-0.5">
+                      {t("packDetail.freeShippingIncluded")}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("productDetail.shipping")}</p>
+                  <p className="text-xs text-muted-foreground">{t("productDetail.freeShipping").replace("500", "500")}</p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

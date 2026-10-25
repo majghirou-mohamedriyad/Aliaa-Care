@@ -50,6 +50,7 @@ export interface Product {
   featured?: boolean;
   new?: boolean;
   flavors?: string[];
+  free_shipping?: boolean;
 }
 
 export const collections: Collection[] = [

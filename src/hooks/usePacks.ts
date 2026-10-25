@@ -18,6 +18,7 @@ export interface DbPack {
   images: string[];
   active: boolean;
   featured: boolean;
+  free_shipping?: boolean | null;
   created_at: string;
   items: DbPackItem[];
 }
@@ -71,6 +72,7 @@ async function fetchPacks(): Promise<DbPack[]> {
       image: pack.image || "/placeholder.svg",
       images: imagesMapped.length > 0 ? imagesMapped : [pack.image || "/placeholder.svg"],
       featured: pack.featured ?? false,
+      free_shipping: pack.free_shipping ?? false,
       items: (pack.items || []).map((item) => ({
         ...item,
         product_name: item.product?.name || "Produit inconnu",
@@ -102,6 +104,7 @@ export function useAddPack() {
     mutationFn: async (input: {
       name: string; slug: string; description: string; long_description: string;
       price: number; image: string; images: string[]; active: boolean; featured: boolean;
+      free_shipping?: boolean;
       items: { product_id: string; quantity: number; selected_weight?: string | null }[];
       name_ar?: string;
       name_en?: string;
@@ -149,7 +152,7 @@ export function useUpdatePack() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      updates: { name: string; slug: string; description: string; long_description: string; price: number; image: string; active: boolean; featured: boolean; name_ar?: string | null; name_en?: string | null; description_ar?: string | null; description_en?: string | null; long_description_ar?: string | null; long_description_en?: string | null };
+      updates: { name: string; slug: string; description: string; long_description: string; price: number; image: string; active: boolean; featured: boolean; free_shipping?: boolean | null; name_ar?: string | null; name_en?: string | null; description_ar?: string | null; description_en?: string | null; long_description_ar?: string | null; long_description_en?: string | null };
       images: string[];
       items: { product_id: string; quantity: number; selected_weight?: string | null }[];
     }) => {
@@ -214,6 +217,17 @@ export function useTogglePackActive() {
   return useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
       const { error } = await supabase.from("packs").update({ active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["packs"] }),
+  });
+}
+
+export function useTogglePackFreeShipping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, free_shipping }: { id: string; free_shipping: boolean }) => {
+      const { error } = await supabase.from("packs").update({ free_shipping }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["packs"] }),

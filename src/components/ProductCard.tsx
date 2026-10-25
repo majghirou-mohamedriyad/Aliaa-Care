@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart, ShoppingBag, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Product } from "@/data/products";
 import { useClientProducts } from "@/hooks/useClientProducts";
@@ -98,6 +98,13 @@ export const ProductCard = ({ product, index = 0, variant = "default" }: Product
               <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
                 className="px-3 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase bg-primary text-primary-foreground rounded-sm">
                 {t("common.featured")}
+              </motion.span>
+            )}
+            {product.free_shipping && (
+              <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.45 }}
+                className="px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase bg-emerald-600 text-white rounded-sm shadow-sm flex items-center gap-1.5 w-fit">
+                <Truck className="w-3 h-3 shrink-0" />
+                <span>{t("common.freeShipping")}</span>
               </motion.span>
             )}
             {promoDiscount > 0 && (

@@ -344,6 +344,24 @@ const translations = {
   // Language selector
   "lang.chooseLanguage": { fr: "Choisissez votre langue", en: "Choose your language", ar: "اختار لغتك" },
   "lang.welcome": { fr: "Bienvenue chez ALIAA", en: "Welcome to ALIAA", ar: "مرحبًا بك في ALIAA" },
+
+  // Free shipping
+  "common.freeShipping": { fr: "Livraison Gratuite", en: "Free Shipping", ar: "توصيل مجاني" },
+  "productDetail.freeShippingIncluded": {
+    fr: "Livraison offerte pour ce produit !",
+    en: "Free delivery offered for this product!",
+    ar: "توصيل مجاني متوفر لهذا المنتج !"
+  },
+  "packDetail.freeShippingIncluded": {
+    fr: "Livraison offerte pour ce pack !",
+    en: "Free delivery offered for this pack!",
+    ar: "توصيل مجاني متوفر لهذه الحزمة !"
+  },
+  "checkout.freeShippingApplied": {
+    fr: "Livraison gratuite offerte (inclut un article avec livraison offerte)",
+    en: "Free shipping applied (includes an item with free shipping)",
+    ar: "توصيل مجاني مطبق (يتضمن منتجاً مع توصيل مجاني)"
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ShoppingBag, Trash2, Share2 } from "lucide-react";
+import { ArrowRight, ShoppingBag, Trash2, Share2, Truck } from "lucide-react";
 
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { useCart } from "@/hooks/useCart";
@@ -105,6 +105,7 @@ const Cart = () => {
   const tieredPromos = getTieredPromos();
   const discountAmount = Math.round(subtotal * tieredDiscount / 100);
   const total = subtotal - discountAmount;
+  const hasFreeShippingItem = items.some((item) => !!item.product.free_shipping);
 
   const cartProductIds = items.map((item) => item.product.id);
   const upsellProducts = products
@@ -164,6 +165,12 @@ const Cart = () => {
                           </p>
                         )}
                         <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{getTranslated(item.product, "description", lang)}</p>
+                        {item.product.free_shipping && (
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-2 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                            <Truck className="w-3 h-3 shrink-0" />
+                            <span>{t("common.freeShipping")}</span>
+                          </div>
+                        )}
                         
                         {item.selectedFlavors && item.selectedFlavors.length > 0 && (
                           <div className="mt-2 space-y-1">
@@ -340,6 +347,12 @@ const Cart = () => {
                   <div>
                     <p className="text-[10px] sm:text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("cart.shipping")}</p>
                     <p className="text-xs text-muted-foreground">{t("cart.deliveryMorocco")}</p>
+                    {hasFreeShippingItem && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 mt-2">
+                        <Truck className="w-3.5 h-3.5 shrink-0" />
+                        {t("checkout.freeShippingApplied")}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ChevronLeft, ChevronRight, ArrowRight, ShoppingBag, MessageSquare, Flame } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, ArrowRight, ShoppingBag, MessageSquare, Flame, Truck } from "lucide-react";
 
 import { ProductCard } from "@/components/ProductCard";
 import { QuantitySelector } from "@/components/QuantitySelector";
@@ -140,7 +140,7 @@ const ProductDetail = () => {
           priceCurrency: "MAD",
           availability: isAvailable ? "InStock" : "OutOfStock",
           shippingDetails: {
-            price: discountedPrice >= freeShippingThreshold ? 0 : 40,
+            price: (product.free_shipping || discountedPrice >= freeShippingThreshold) ? 0 : 40,
             currency: "MAD",
             deliveryTimeDays: 3,
           },
@@ -232,10 +232,18 @@ const ProductDetail = () => {
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] as const }}
               className="lg:col-span-7 lg:sticky lg:top-28 lg:self-start">
-              {collection && (
-                <Link to={`/products?collection=${collection.slug}`}
-                  className="inline-block text-[11px] font-semibold tracking-[0.3em] uppercase text-primary mb-3 hover:text-primary/80 transition-colors">{getTranslated(collection, "name", lang)}</Link>
-              )}
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                {collection && (
+                  <Link to={`/products?collection=${collection.slug}`}
+                    className="inline-block text-[11px] font-semibold tracking-[0.3em] uppercase text-primary hover:text-primary/80 transition-colors">{getTranslated(collection, "name", lang)}</Link>
+                )}
+                {product.free_shipping && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded-full text-[11px] font-semibold tracking-wider uppercase shadow-sm">
+                    <Truck className="w-3.5 h-3.5" />
+                    {t("common.freeShipping")}
+                  </span>
+                )}
+              </div>
               <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-foreground mb-4 leading-tight break-words">{getTranslated(product, "name", lang)}</h1>
               {(() => {
                 const discount = getProductDiscount(product.id, product.collections || []);
@@ -420,10 +428,24 @@ const ProductDetail = () => {
               )}
 
               <div className="mt-10 pt-8 border-t border-border">
-                <div>
-                  <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("productDetail.shipping")}</p>
-                  <p className="text-xs text-muted-foreground">{t("productDetail.freeShipping").replace("500", freeShippingThreshold.toString())}</p>
-                </div>
+                {product.free_shipping ? (
+                  <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-800/40 p-4 rounded-lg">
+                    <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                        {t("common.freeShipping")}
+                      </p>
+                      <p className="text-xs text-emerald-700/90 dark:text-emerald-400/90 mt-0.5">
+                        {t("productDetail.freeShippingIncluded")}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("productDetail.shipping")}</p>
+                    <p className="text-xs text-muted-foreground">{t("productDetail.freeShipping").replace("500", freeShippingThreshold.toString())}</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

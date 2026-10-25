@@ -27,6 +27,7 @@ export interface ClientProduct {
   images: string[];
   featured?: boolean;
   new?: boolean;
+  free_shipping?: boolean;
   flavors?: string[];
   flavors_ar?: string[] | null;
   flavors_en?: string[] | null;
@@ -71,6 +72,7 @@ function toClientProduct(p: DbProduct): ClientProduct {
     images: p.images.length > 0 ? p.images : ["/placeholder.svg"],
     featured: p.featured ?? false,
     new: p.is_new ?? false,
+    free_shipping: p.free_shipping ?? false,
     flavors: p.flavors || [],
     flavors_ar: p.flavors_ar,
     flavors_en: p.flavors_en,

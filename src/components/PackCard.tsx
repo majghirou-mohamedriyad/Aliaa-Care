@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, Heart, ShoppingBag } from "lucide-react";
+import { Package, Heart, ShoppingBag, Truck } from "lucide-react";
 import { DbPack } from "@/hooks/usePacks";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
@@ -58,6 +58,7 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
       slug: pack.slug,
       collection: "",
       price: discountedPrice,
+      free_shipping: pack.free_shipping,
       description: pack.description,
       description_ar: pack.description_ar || undefined,
       description_en: pack.description_en || undefined,
@@ -141,6 +142,12 @@ export const PackCard = ({ pack, index = 0 }: PackCardProps) => {
             <Package className="w-3 h-3" />
             Pack
           </span>
+          {pack.free_shipping && (
+            <span className="px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase bg-emerald-600 text-white rounded-sm flex items-center gap-1.5 shadow-sm">
+              <Truck className="w-3 h-3" />
+              {t("common.freeShipping")}
+            </span>
+          )}
           {discount > 0 && (
             <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">
               -{discount}%
