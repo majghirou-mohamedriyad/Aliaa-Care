@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   openwa:
     image: ghcr.io/rmyndharis/openwa:latest
@@ -8,9 +6,10 @@ services:
     environment:
       - PORT=2785
       - API_KEY=038e00c4bf9448b2a0fe948ea9b2b141
-      - ENGINE_TYPE=baileys
+      - ENGINE_TYPE=whatsapp-web.js
       - AUTO_START_SESSIONS=true
       - SIMULATE_TYPING=true
+      - CSP_UPGRADE_INSECURE_REQUESTS=false
     volumes:
       - openwa_data:/app/data
     restart: unless-stopped

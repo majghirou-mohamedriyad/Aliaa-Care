@@ -7,6 +7,7 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { QuantitySelector } from "@/components/QuantitySelector";
+import { DirectOrderForm } from "@/components/DirectOrderForm";
 import { useT } from "@/hooks/useT";
 import { useState } from "react";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -402,6 +403,24 @@ const PackDetail = () => {
               >
                 <WhatsAppIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
               </Button>
+            </div>
+
+            {/* Direct Quick Order Form for Pack */}
+            <div className="mt-8">
+              <DirectOrderForm
+                product={{
+                  id: pack.id,
+                  name: pack.name,
+                  name_ar: pack.name_ar || undefined,
+                  name_en: pack.name_en || undefined,
+                  slug: pack.slug,
+                  price: pack.price,
+                  images: pack.images && pack.images.length > 0 ? pack.images : [firstImage],
+                  free_shipping: pack.free_shipping,
+                }}
+                initialQuantity={quantity}
+                discountedPrice={discountedPrice}
+              />
             </div>
 
             <div className="mt-8 pt-6 border-t border-border">

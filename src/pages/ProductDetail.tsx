@@ -6,6 +6,7 @@ import { Heart, ChevronLeft, ChevronRight, ArrowRight, ShoppingBag, MessageSquar
 import { ProductCard } from "@/components/ProductCard";
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { FlashCountdown } from "@/components/FlashCountdown";
+import { DirectOrderForm } from "@/components/DirectOrderForm";
 import { useClientProducts } from "@/hooks/useClientProducts";
 import { useActivePromotions } from "@/hooks/usePromotions";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -427,7 +428,18 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              <div className="mt-10 pt-8 border-t border-border">
+              {/* Direct Quick Order Form */}
+              <div className="mt-8">
+                <DirectOrderForm
+                  product={product}
+                  selectedWeight={selectedWeight}
+                  selectedFlavors={selectedFlavors}
+                  initialQuantity={quantity}
+                  discountedPrice={discountedPrice}
+                />
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-border">
                 {product.free_shipping ? (
                   <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-800/40 p-4 rounded-lg">
                     <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />

@@ -56,6 +56,21 @@
     </image:image>
   </url>
   <url>
+    <loc>https://aliaacare.com/product/feuilles-de-moringa-sches-pures</loc>
+    <image:image>
+      <image:loc>https://api.aliaacare.com/storage/v1/object/public/product-images/1792937750216-kp4q8aqjsrd.webp</image:loc>
+      <image:title>Feuilles de Moringa Séchées Pures</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://api.aliaacare.com/storage/v1/object/public/product-images/1792937815728-xv48g83bej.webp</image:loc>
+      <image:title>Feuilles de Moringa Séchées Pures</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://api.aliaacare.com/storage/v1/object/public/product-images/1792937815747-rx4qag7vnr.webp</image:loc>
+      <image:title>Feuilles de Moringa Séchées Pures</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://aliaacare.com/product/graines-de-cresson-alnois-hab-rachad-pur</loc>
     <image:image>
       <image:loc>https://api.aliaacare.com/storage/v1/object/public/product-images/1781266391705-br57jpqa7ws.webp</image:loc>
@@ -109,6 +124,17 @@
     <image:image>
       <image:loc>https://api.aliaacare.com/storage/v1/object/public/product-images/1781265796619-ci0tt4ydcl9.webp</image:loc>
       <image:title>Épices Msakhen Traditionnelles (Mélange Revitalisant &amp; Post-Partum)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://aliaacare.com/product/pomme-dadam</loc>
+    <image:image>
+      <image:loc>https://api.aliaacare.com/storage/v1/object/public/product-images/1792939372398-vtzvsehq7gt.webp</image:loc>
+      <image:title>Pomme d&apos;Adam</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://api.aliaacare.com/storage/v1/object/public/product-images/1792940025777-nl2n5g2hvnn.webp</image:loc>
+      <image:title>Pomme d&apos;Adam</image:title>
     </image:image>
   </url>
   <url>
