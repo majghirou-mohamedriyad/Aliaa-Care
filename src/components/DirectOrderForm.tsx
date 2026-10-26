@@ -97,7 +97,7 @@ const formTranslations = {
   ar: {
     badge: "طلب سريع ومباشر",
     title: "اطلب في 30 ثانية",
-    subtitle: "استلام الطلبية عند الاستلام",
+    subtitle: "الدفع عند الاستلام",
     quantity: "الكمية المطلوبة",
     unit: "قطعة",
     fullName: "الاسم الكامل",
@@ -142,7 +142,7 @@ const formTranslations = {
   en: {
     badge: "Direct Express Order",
     title: "Order in 30 seconds",
-    subtitle: "Cash on delivery after receiving and inspecting your package",
+    subtitle: "Cash on delivery after receiving",
     quantity: "Quantity",
     unit: "unit",
     fullName: "Full Name",
