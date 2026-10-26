@@ -97,7 +97,7 @@ const formTranslations = {
   ar: {
     badge: "طلب سريع ومباشر",
     title: "اطلب في 30 ثانية",
-    subtitle: "الدفع نقداً بعد استلام ومعاينة المنتج",
+    subtitle: "استلام الطلبية عند الاستلام",
     quantity: "الكمية المطلوبة",
     unit: "قطعة",
     fullName: "الاسم الكامل",
