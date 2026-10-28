@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ShoppingBag, Trash2, Share2, Truck } from "lucide-react";
+import { ArrowRight, ShoppingBag, Trash2, Share2, Truck, CheckCircle2, MessageCircle } from "lucide-react";
 
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { useCart } from "@/hooks/useCart";
@@ -13,6 +13,7 @@ import { MetaManager } from "@/seo/components/MetaManager";
 import { useClientProducts } from "@/hooks/useClientProducts";
 import { useToast } from "@/hooks/use-toast";
 import { Product } from "@/data/products";
+import { DirectOrderForm } from "@/components/DirectOrderForm";
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, getSubtotal, addItem } = useCart();
@@ -21,6 +22,12 @@ const Cart = () => {
   const { getTieredDiscount, getTieredPromos } = useActivePromotions();
   const { t, lang } = useT();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [submittedOrder, setSubmittedOrder] = useState<{
+    orderNumber: string;
+    total: number;
+    customerName: string;
+    phone: string;
+  } | null>(null);
 
   // Import shared cart
   useEffect(() => {
@@ -112,6 +119,74 @@ const Cart = () => {
     .filter((p) => !cartProductIds.includes(p.id) && p.stock > 0)
     .slice(0, 3);
 
+  // If order was submitted successfully from the direct form
+  if (submittedOrder) {
+    const rawMsg = (lang === 'ar'
+      ? `السلام عليكم علياء كير، لقد قمت بتأكيد طلبي رقم #${submittedOrder.orderNumber} بمجموع ${submittedOrder.total.toLocaleString()} درهم. أريد تأكيد طلبي وشكراً!`
+      : lang === 'en'
+      ? `Hello Aliaa Care, I placed order #${submittedOrder.orderNumber} for ${submittedOrder.total.toLocaleString()} DH. I would like to confirm my delivery.`
+      : `Bonjour Aliaa Care, j'ai passé ma commande #${submittedOrder.orderNumber} d'un montant de ${submittedOrder.total.toLocaleString()} DH. Je souhaite confirmer ma livraison.`);
+    const whatsappUrl = `https://wa.me/212699928463?text=${encodeURIComponent(rawMsg)}`;
+
+    return (
+      <>
+        <MetaManager title={lang === 'ar' ? "تم تأكيد طلبك" : lang === 'en' ? "Order Confirmed" : "Commande confirmée"} />
+        <div className="container-narrow py-16 sm:py-24 text-center">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="max-w-xl mx-auto space-y-6">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/20">
+              <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12" />
+            </div>
+
+            <div>
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 mb-2">
+                {lang === 'ar' ? "تم تسجيل الطلب بنجاح" : lang === 'en' ? "Order Placed Successfully" : "Commande Enregistrée"}
+              </span>
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl text-foreground font-bold">
+                {lang === 'ar' ? `شكراً لك ${submittedOrder.customerName} !` : lang === 'en' ? `Thank you ${submittedOrder.customerName}!` : `Merci ${submittedOrder.customerName} !`}
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2">
+                {lang === 'ar' ? "سنتواصل معك هاتفياً أو عبر الواتساب لتأكيد موعد الإرسال والتوصيل." : lang === 'en' ? "We will contact you shortly to confirm your delivery." : "Nous vous contacterons bientôt par téléphone ou WhatsApp pour confirmer la livraison."}</p>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5 sm:p-6 text-sm space-y-3 text-left rtl:text-right shadow-sm">
+              <div className="flex justify-between items-center pb-3 border-b border-border/60">
+                <span className="text-muted-foreground">{lang === 'ar' ? "رقم الطلب :" : lang === 'en' ? "Order number:" : "Numéro de commande :"}</span>
+                <span className="font-mono font-bold text-foreground text-base">#{submittedOrder.orderNumber}</span>
+              </div>
+              <div className="flex justify-between items-center text-muted-foreground pb-3 border-b border-border/60">
+                <span>{lang === 'ar' ? "طريقة الدفع :" : lang === 'en' ? "Payment method:" : "Mode de paiement :"}</span>
+                <span className="font-medium text-foreground">{lang === 'ar' ? "الدفع عند الاستلام" : lang === 'en' ? "Cash on Delivery" : "Paiement à la livraison"}</span>
+              </div>
+              <div className="flex justify-between items-center pt-1 font-bold text-base sm:text-lg text-foreground">
+                <span>{lang === 'ar' ? "المجموع الكلي للدفع :" : lang === 'en' ? "Total to pay on delivery:" : "Total à payer à la livraison :"}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-sans text-xl">{submittedOrder.total.toLocaleString()} DH</span>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-sm tracking-wide shadow-lg shadow-[#25D366]/20 transition-all active:scale-[0.99]"
+              >
+                <MessageCircle className="w-5 h-5 shrink-0" />
+                <span>{lang === 'ar' ? "تأكيد الطلب فوراً عبر الواتساب" : lang === 'en' ? "Confirm instantly via WhatsApp" : "Confirmer instantanément sur WhatsApp"}</span>
+              </a>
+
+              <Button asChild variant="outline" size="lg" className="w-full rounded-xl py-6 text-xs sm:text-sm tracking-wider uppercase">
+                <Link to="/products">
+                  {lang === 'ar' ? "متابعة التسوق" : lang === 'en' ? "Continue Shopping" : "Continuer mes achats"}
+                  <ArrowRight className="ltr:ml-2 rtl:mr-2 w-4 h-4" />
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <>
@@ -143,11 +218,24 @@ const Cart = () => {
 
       <section className="py-10 md:py-16">
         <div className="container-full">
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="font-serif text-3xl sm:text-4xl md:text-5xl mb-6 sm:mb-12">
-            {t("cart.yourCart")}
-          </motion.h1>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-12">
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="font-serif text-3xl sm:text-4xl md:text-5xl">
+              {t("cart.yourCart")}
+            </motion.h1>
 
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-16">
+            <Button
+              onClick={handleShareCart}
+              variant="outline"
+              size="sm"
+              className="self-start sm:self-auto text-xs tracking-wider uppercase gap-2 border-border/80 text-muted-foreground hover:text-foreground"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>{lang === 'ar' ? "مشاركة السلة" : lang === 'en' ? "Share Cart" : "Partager mon panier"}</span>
+            </Button>
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+            {/* Colonne Gauche : Liste des articles */}
             <div className="lg:col-span-7">
               <div className="space-y-0">
                 {items.map((item, index) => (
@@ -177,7 +265,7 @@ const Cart = () => {
                             <p className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
                               {lang === 'ar' ? "النكهات المختارة :" : 
                                lang === 'en' ? "Selected flavor(s) :" : 
-                               "Goût(s) sélectionné(s) :"}
+                                "Goût(s) sélectionné(s) :"}
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {item.selectedFlavors.map((flavor, i) => (
@@ -232,7 +320,7 @@ const Cart = () => {
                           quantity={item.quantity} 
                           onQuantityChange={(qty) => updateQuantity(item.product.id, qty, undefined, undefined, item.selectedWeight)} 
                         />
-                        <button onClick={() => removeItem(item.product.id, item.selectedWeight)} className="p-1.5 sm:p-2 text-muted-foreground hover:text-destructive transition-colors shrink-0">
+                        <button onClick={() => removeItem(item.product.id, item.selectedWeight)} className="p-1.5 sm:p-2 text-muted-foreground hover:text-destructive transition-colors shrink-0" title="Supprimer">
                           <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
@@ -287,7 +375,9 @@ const Cart = () => {
                               </Button>
                             ) : (
                               <Button onClick={handleQuickAdd} variant="outline" size="sm" className="w-full text-[10px] sm:text-xs tracking-wider uppercase rounded-none py-3 h-auto border-primary/20 text-primary hover:bg-primary/5">
-                                {lang === 'ar' ? "إضافة" : lang === 'en' ? "Add" : "Ajouter"}
+                                <Link to="#" onClick={(e) => { e.preventDefault(); handleQuickAdd(); }}>
+                                  {lang === 'ar' ? "إضافة" : lang === 'en' ? "Add" : "Ajouter"}
+                                </Link>
                               </Button>
                             )}
                           </div>
@@ -303,57 +393,26 @@ const Cart = () => {
               </Link>
             </div>
 
+            {/* Colonne Droite : Formulaire de commande directe intégré */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="lg:col-span-5">
-              <div className="bg-linen p-5 sm:p-8 rounded-lg lg:sticky lg:top-28 border border-border/50">
-                <h2 className="font-serif text-xl sm:text-2xl mb-6 sm:mb-8">{t("cart.summary")}</h2>
-                <div className="space-y-3.5 mb-6 sm:mb-8">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("cart.subtotal")}</span>
-                    <span className="font-medium">{subtotal.toLocaleString()} DH</span>
-                  </div>
-                  {tieredDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-destructive font-medium">
-                      <span>{t("cart.tieredDiscount")} (-{tieredDiscount}%)</span>
-                      <span>-{discountAmount.toLocaleString()} DH</span>
-                    </div>
-                  )}
-                  {tieredPromos.length > 0 && tieredDiscount === 0 && (
-                    <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2.5">
-                      💡 {tieredPromos[0].tier_rules?.[0] && t("cart.addMoreToGetDiscount").replace("{qty}", (tieredPromos[0].tier_rules[0].min_qty - totalItems).toString()).replace("{percent}", tieredPromos[0].tier_rules[0].discount_percent.toString())}
-                    </div>
-                  )}
-                </div>
-                <div className="border-t border-border pt-4 mb-6 sm:mb-8">
-                  <div className="flex justify-between font-serif text-lg sm:text-xl font-bold">
-                    <span>{t("cart.total")}</span>
-                    <span>{total.toLocaleString()} DH</span>
-                  </div>
-                </div>
-                <div className="flex gap-2 w-full">
-                  <Button asChild size="lg" className="flex-1 rounded-none h-12 sm:h-14 text-xs sm:text-sm tracking-[0.1em] sm:tracking-[0.15em] uppercase btn-premium flex items-center justify-center">
-                    <Link to="/checkout">{t("cart.checkout")}<ArrowRight className="ltr:ml-2 rtl:mr-2 w-4 h-4" /></Link>
-                  </Button>
-                  <Button 
-                    onClick={handleShareCart}
-                    variant="outline" 
-                    size="lg" 
-                    className="w-12 sm:w-14 h-12 sm:h-14 rounded-none border-primary/20 text-primary hover:bg-primary/5 p-0 flex items-center justify-center shrink-0"
-                    title={lang === 'ar' ? "مشاركة السلة" : lang === 'en' ? "Share Cart" : "Partager le panier"}
+              <div className="lg:sticky lg:top-24 space-y-4">
+                {/* Formulaire de commande directe du Panier */}
+                <DirectOrderForm 
+                  isCart={true} 
+                  onSuccess={(orderData) => setSubmittedOrder(orderData)} 
+                />
+
+                <div className="text-center pt-2">
+                  <Link 
+                    to="/checkout" 
+                    className="text-xs text-muted-foreground hover:text-primary underline transition-colors"
                   >
-                    <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </Button>
-                </div>
-                <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border grid grid-cols-1 gap-4">
-                  <div>
-                    <p className="text-[10px] sm:text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("cart.shipping")}</p>
-                    <p className="text-xs text-muted-foreground">{t("cart.deliveryMorocco")}</p>
-                    {hasFreeShippingItem && (
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 mt-2">
-                        <Truck className="w-3.5 h-3.5 shrink-0" />
-                        {t("checkout.freeShippingApplied")}
-                      </p>
-                    )}
-                  </div>
+                    {lang === 'ar' 
+                      ? "أو الانتقال إلى صفحة إتمام الطلب الكلاسيكية" 
+                      : lang === 'en' 
+                      ? "Or proceed via classic checkout page" 
+                      : "Ou passer par la page de commande classique"}
+                  </Link>
                 </div>
               </div>
             </motion.div>
@@ -365,4 +424,3 @@ const Cart = () => {
 };
 
 export default Cart;
-

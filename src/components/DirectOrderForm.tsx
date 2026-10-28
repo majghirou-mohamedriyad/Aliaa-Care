@@ -13,7 +13,9 @@ import {
   ChevronDown,
   MessageCircle,
   Clock,
-  X
+  X,
+  Tag,
+  ShoppingBag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,16 +29,20 @@ import livraisonData from "@/data/livraison.json";
 import { useBanner } from "@/hooks/useBanner";
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { getTranslated } from "@/utils/translationUtils";
+import { useCart } from "@/hooks/useCart";
+import { useActivePromotions } from "@/hooks/usePromotions";
+import { useValidatePromoCode, useIncrementPromoUsage, PromoCode } from "@/hooks/usePromoCodes";
+import { Link } from "react-router-dom";
 
-interface DirectOrderFormProps {
-  product: {
+export interface DirectOrderFormProps {
+  product?: {
     id: string;
     name: string;
     name_ar?: string;
     name_en?: string;
-    slug: string;
+    slug?: string;
     price: number;
-    images: string[];
+    images?: string[];
     free_shipping?: boolean;
     stock?: number;
     weight_prices?: Array<{ weight: string | number; price: number }>;
@@ -44,15 +50,18 @@ interface DirectOrderFormProps {
   selectedWeight?: string | number;
   selectedFlavors?: string[];
   initialQuantity?: number;
-  discountedPrice: number;
-  onSuccess?: () => void;
+  discountedPrice?: number;
+  onSuccess?: (orderData: { orderNumber: string; total: number; customerName: string; phone: string }) => void;
+  isCart?: boolean;
 }
 
 const formTranslations = {
   fr: {
     badge: "Commande Express Directe",
     title: "Commandez en 30 secondes",
+    cartTitle: "Finalisez votre commande",
     subtitle: "Paiement à la livraison après réception de votre colis",
+    cartSubtitle: "Paiement en espèces à la livraison",
     quantity: "Quantité",
     unit: "unité",
     fullName: "Nom & Prénom",
@@ -68,6 +77,11 @@ const formTranslations = {
     notes: "Note pour le livreur (Optionnel)",
     notesPlaceholder: "Ex: Appeler avant la livraison...",
     subtotal: "Sous-total",
+    tieredDiscountLabel: "Remise par quantité",
+    promoDiscountLabel: "Code promo",
+    promoCodeTitle: "Avez-vous un code promo ?",
+    promoPlaceholder: "Code promo...",
+    apply: "Appliquer",
     shipping: "Frais de livraison",
     free: "Gratuit (0 DH)",
     freeShipping: "Gratuit",
@@ -93,11 +107,14 @@ const formTranslations = {
     confirmWhatsApp: "Confirmer instantanément sur WhatsApp",
     orderAgain: "Commander à nouveau",
     whatsappMsg: "Bonjour Aliaa Care, j'ai passé la commande #{orderNumber} pour le produit {productName}. Je souhaite confirmer ma livraison.",
+    whatsappCartMsg: "Bonjour Aliaa Care, j'ai passé ma commande #{orderNumber} d'un montant de {total} DH. Je souhaite confirmer ma livraison.",
   },
   ar: {
     badge: "طلب سريع ومباشر",
     title: "اطلب في 30 ثانية",
+    cartTitle: "أتمم طلبك في 30 ثانية",
     subtitle: "الدفع عند الاستلام",
+    cartSubtitle: "الدفع نقداً عند استلام طلبيتك",
     quantity: "الكمية المطلوبة",
     unit: "قطعة",
     fullName: "الاسم الكامل",
@@ -113,6 +130,11 @@ const formTranslations = {
     notes: "ملاحظة أو وقت مفضل للاتصال (اختياري)",
     notesPlaceholder: "مثال: يرجى الاتصال قبل الوصول...",
     subtotal: "المجموع الفرعي",
+    tieredDiscountLabel: "تخفيض الكمية",
+    promoDiscountLabel: "كود الخصم",
+    promoCodeTitle: "هل لديك كود خصم؟",
+    promoPlaceholder: "كود الخصم...",
+    apply: "تطبيق",
     shipping: "مصاريف التوصيل",
     free: "مجاني (0 درهم)",
     freeShipping: "مجاني",
@@ -138,11 +160,14 @@ const formTranslations = {
     confirmWhatsApp: "تأكيد فوري عبر الواتساب",
     orderAgain: "طلب قطعة أخرى",
     whatsappMsg: "السلام عليكم، لقد قمت بطلب المنتج {productName} برقم طلب #{orderNumber}. أريد تأكيد طلبي وشكراً!",
+    whatsappCartMsg: "السلام عليكم، لقد قمت بتأكيد طلبي رقم #{orderNumber} بمجموع {total} درهم. أريد تأكيد الإرسال وشكراً!",
   },
   en: {
     badge: "Direct Express Order",
     title: "Order in 30 seconds",
+    cartTitle: "Complete your order",
     subtitle: "Cash on delivery after receiving",
+    cartSubtitle: "Cash on delivery upon arrival",
     quantity: "Quantity",
     unit: "unit",
     fullName: "Full Name",
@@ -158,6 +183,11 @@ const formTranslations = {
     notes: "Delivery Note (Optional)",
     notesPlaceholder: "Ex: Call before arrival...",
     subtotal: "Subtotal",
+    tieredDiscountLabel: "Tiered discount",
+    promoDiscountLabel: "Promo code",
+    promoCodeTitle: "Do you have a promo code?",
+    promoPlaceholder: "Promo code...",
+    apply: "Apply",
     shipping: "Shipping Fee",
     free: "Free (0 DH)",
     freeShipping: "Free",
@@ -183,6 +213,7 @@ const formTranslations = {
     confirmWhatsApp: "Confirm immediately on WhatsApp",
     orderAgain: "Order another item",
     whatsappMsg: "Hello Aliaa Care, I placed order #{orderNumber} for {productName}. I would like to confirm my delivery.",
+    whatsappCartMsg: "Hello Aliaa Care, I placed order #{orderNumber} for {total} DH. I would like to confirm my delivery.",
   }
 };
 
@@ -191,16 +222,22 @@ export const DirectOrderForm = ({
   selectedWeight,
   selectedFlavors = [],
   initialQuantity = 1,
-  discountedPrice,
+  discountedPrice = 0,
+  onSuccess,
+  isCart = false,
 }: DirectOrderFormProps) => {
   const { toast } = useToast();
   const { data: banner } = useBanner();
   const { lang } = useT();
   const addOrder = useAddOrder();
+  const { items: cartItems, clearCart, getSubtotal } = useCart();
+  const { getTieredDiscount } = useActivePromotions();
+  const validatePromo = useValidatePromoCode();
+  const incrementUsage = useIncrementPromoUsage();
 
   // Pick language dictionary with fallback to French
   const tForm = formTranslations[lang as keyof typeof formTranslations] || formTranslations.fr;
-  const productName = getTranslated(product, "name", lang);
+  const productName = product ? getTranslated(product, "name", lang) : "";
 
   const [quantity, setQuantity] = useState(initialQuantity);
   const [fullName, setFullName] = useState("");
@@ -208,6 +245,11 @@ export const DirectOrderForm = ({
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [isPromoOpen, setIsPromoOpen] = useState(false);
 
   const [citySearch, setCitySearch] = useState("");
   const [isCityOpen, setIsCityOpen] = useState(false);
@@ -240,13 +282,36 @@ export const DirectOrderForm = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Shipping cost calculation
-  const subtotal = discountedPrice * quantity;
+  // Pricing calculations
+  const rawSubtotal = isCart 
+    ? getSubtotal() 
+    : (discountedPrice || product?.price || 0) * quantity;
+
+  const totalItemsCount = isCart 
+    ? cartItems.reduce((s, i) => s + i.quantity, 0) 
+    : quantity;
+
+  const tieredDiscount = isCart ? getTieredDiscount(totalItemsCount) : 0;
+  const tieredDiscountAmount = Math.round((rawSubtotal * tieredDiscount) / 100);
+  const subtotalAfterTiered = rawSubtotal - tieredDiscountAmount;
+
+  // Promo code discount
+  const promoDiscountPercent = appliedPromo ? Number(appliedPromo.discount_percent) || 0 : 0;
+  const promoDiscountAmount = appliedPromo 
+    ? Math.round((subtotalAfterTiered * promoDiscountPercent) / 100) 
+    : 0;
+
+  const subtotal = Math.max(0, subtotalAfterTiered - promoDiscountAmount);
+
   const freeShippingThreshold = Number(banner?.free_shipping_threshold ?? 500);
   const selectedCityData = livraisonData.find((c) => c.nom.toLowerCase() === city.toLowerCase());
   const baseShipping = selectedCityData ? selectedCityData.livraison : 40;
   
-  const isFreeShipping = !!product.free_shipping || subtotal >= freeShippingThreshold;
+  const hasFreeShippingItem = isCart
+    ? cartItems.some((i) => !!i.product.free_shipping)
+    : !!product?.free_shipping;
+
+  const isFreeShipping = hasFreeShippingItem || subtotal >= freeShippingThreshold;
   const shipping = isFreeShipping ? 0 : (city ? baseShipping : 0);
   const total = subtotal + shipping;
 
@@ -254,6 +319,21 @@ export const DirectOrderForm = ({
     const cleaned = val.replace(/\D/g, "").slice(0, 10);
     setPhone(cleaned);
     if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoError("");
+    try {
+      const promo = await validatePromo.mutateAsync(promoInput);
+      setAppliedPromo(promo);
+      toast({
+        title: lang === 'ar' ? "تم تفعيل كود الخصم" : lang === 'en' ? "Promo code applied" : "Code promo appliqué !",
+        description: `-${promo.discount_percent}%`,
+      });
+    } catch (err: any) {
+      setPromoError(err?.message || (lang === 'ar' ? "كود غير صالح" : "Code promo non valide"));
+    }
   };
 
   const validate = () => {
@@ -278,6 +358,15 @@ export const DirectOrderForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCart && cartItems.length === 0) {
+      toast({
+        title: tForm.incompleteData,
+        description: lang === 'ar' ? "سلة التسوق فارغة" : lang === 'en' ? "Cart is empty" : "Votre panier est vide",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!validate()) {
       toast({
         title: tForm.incompleteData,
@@ -293,15 +382,34 @@ export const DirectOrderForm = ({
       const customerName = fullName.trim();
       const fullPhone = phone.trim();
 
-      const itemPayload = {
-        product_id: product.id,
-        product_name: product.name,
-        quantity,
-        unit_price: discountedPrice,
-        cost_price: 0,
-        selected_flavors: selectedFlavors,
-        selected_weight: selectedWeight,
-      };
+      const itemPayloads = isCart
+        ? cartItems.map((i) => {
+            let price = i.product.price;
+            if (i.selectedWeight && (i.product as any).weight_prices) {
+              const wp = (i.product as any).weight_prices.find((w: any) => String(w.weight) === String(i.selectedWeight));
+              if (wp) price = wp.price;
+            }
+            return {
+              product_id: i.product.id,
+              product_name: i.product.name,
+              quantity: i.quantity,
+              unit_price: price,
+              cost_price: 0,
+              selected_flavors: i.selectedFlavors || [],
+              selected_weight: i.selectedWeight,
+            };
+          })
+        : [
+            {
+              product_id: product?.id || "direct-product",
+              product_name: product?.name || "Produit",
+              quantity,
+              unit_price: discountedPrice || product?.price || 0,
+              cost_price: 0,
+              selected_flavors: selectedFlavors,
+              selected_weight: selectedWeight,
+            },
+          ];
 
       await addOrder.mutateAsync({
         order_number: orderNumber,
@@ -313,19 +421,43 @@ export const DirectOrderForm = ({
         customer_city: city.trim(),
         customer_region: "Maroc",
         notes: notes.trim() || undefined,
-        items: [itemPayload],
+        items: itemPayloads,
       });
 
+      if (appliedPromo) {
+        try {
+          await incrementUsage.mutateAsync(appliedPromo.id);
+        } catch (err) {
+          console.error("Failed to increment promo usage:", err);
+        }
+      }
+
       // Send WhatsApp notifications in parallel (non-blocking)
-      const mappedItems = [
-        {
-          product_name: product.name,
-          quantity,
-          unit_price: discountedPrice,
-          selected_flavors: selectedFlavors,
-          selected_weight: selectedWeight,
-        },
-      ];
+      const mappedItems = isCart
+        ? cartItems.map((i) => {
+            let price = i.product.price;
+            if (i.selectedWeight && (i.product as any).weight_prices) {
+              const wp = (i.product as any).weight_prices.find((w: any) => String(w.weight) === String(i.selectedWeight));
+              if (wp) price = wp.price;
+            }
+            return {
+              product_name: i.product.name,
+              quantity: i.quantity,
+              unit_price: price,
+              selected_flavors: i.selectedFlavors || [],
+              pack_item_flavors: i.packItemFlavors || {},
+              selected_weight: i.selectedWeight,
+            };
+          })
+        : [
+            {
+              product_name: product?.name || "Produit",
+              quantity,
+              unit_price: discountedPrice || product?.price || 0,
+              selected_flavors: selectedFlavors,
+              selected_weight: selectedWeight,
+            },
+          ];
 
       Promise.all([
         sendOrderWhatsAppNotification(
@@ -343,7 +475,7 @@ export const DirectOrderForm = ({
           {
             order_number: orderNumber,
             total,
-            customerName: `${customerName} (Direct Order)`,
+            customerName: `${customerName} (${isCart ? 'Commande Panier' : 'Direct Order'})`,
             phone: "212699928463",
             address: `${address}, ${city}`,
           },
@@ -354,17 +486,25 @@ export const DirectOrderForm = ({
         console.error("WhatsApp notification error in DirectOrderForm:", err);
       });
 
-      setSubmittedOrder({
+      const submittedData = {
         orderNumber,
         total,
         customerName,
         phone: fullPhone,
-      });
+      };
+
+      setSubmittedOrder(submittedData);
 
       toast({
         title: tForm.orderSuccessTitle,
         description: tForm.orderSuccessDesc,
       });
+
+      if (isCart) {
+        clearCart();
+      }
+
+      onSuccess?.(submittedData);
     } catch (error) {
       console.error("Direct order submission failed:", error);
       toast({
@@ -381,8 +521,8 @@ export const DirectOrderForm = ({
     .filter((c) => c.nom.toLowerCase().includes(citySearch.toLowerCase()))
     .slice(0, 50);
 
-  // Success Confirmation Card
-  if (submittedOrder) {
+  // Success Confirmation Card (When used on ProductDetail / PackDetail)
+  if (submittedOrder && !isCart) {
     const rawMsg = tForm.whatsappMsg
       .replace("{orderNumber}", submittedOrder.orderNumber)
       .replace("{productName}", productName);
@@ -463,32 +603,34 @@ export const DirectOrderForm = ({
             </span>
           </div>
           <h3 className="font-serif text-lg sm:text-xl md:text-2xl text-foreground font-bold mt-1 leading-snug">
-            {tForm.title}
+            {isCart ? tForm.cartTitle : tForm.title}
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-            {tForm.subtitle}
+            {isCart ? tForm.cartSubtitle : tForm.subtitle}
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3.5">
-        {/* Quantity selector inside the form */}
-        <div className="flex items-center justify-between gap-2 p-2.5 sm:p-3 rounded-lg bg-muted/40 border border-border/50">
-          <div className="min-w-0">
-            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground block truncate">
-              {tForm.quantity}
-            </span>
-            <span className="text-xs text-foreground font-medium truncate block">
-              {discountedPrice.toLocaleString()} DH / {tForm.unit}
-              {selectedWeight ? ` (${selectedWeight})` : ""}
-            </span>
+        {/* Quantity selector inside the form (Only for single product mode) */}
+        {!isCart && (
+          <div className="flex items-center justify-between gap-2 p-2.5 sm:p-3 rounded-lg bg-muted/40 border border-border/50">
+            <div className="min-w-0">
+              <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground block truncate">
+                {tForm.quantity}
+              </span>
+              <span className="text-xs text-foreground font-medium truncate block">
+                {(discountedPrice || product?.price || 0).toLocaleString()} DH / {tForm.unit}
+                {selectedWeight ? ` (${selectedWeight})` : ""}
+              </span>
+            </div>
+            <QuantitySelector
+              quantity={quantity}
+              onQuantityChange={setQuantity}
+              className="bg-background h-9 sm:h-10 shrink-0"
+            />
           </div>
-          <QuantitySelector
-            quantity={quantity}
-            onQuantityChange={setQuantity}
-            className="bg-background h-9 sm:h-10 shrink-0"
-          />
-        </div>
+        )}
 
         {/* Full Name */}
         <div>
@@ -640,18 +782,108 @@ export const DirectOrderForm = ({
           />
         </div>
 
+        {/* Promo Code (Optional Toggle) */}
+        <div className="pt-0.5">
+          {!appliedPromo ? (
+            <div>
+              {!isPromoOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setIsPromoOpen(true)}
+                  className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1.5"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>{tForm.promoCodeTitle}</span>
+                </button>
+              ) : (
+                <div className="space-y-1.5 animate-in fade-in duration-200">
+                  <div className="flex gap-2">
+                    <Input
+                      value={promoInput}
+                      onChange={(e) => {
+                        setPromoInput(e.target.value);
+                        setPromoError("");
+                      }}
+                      placeholder={tForm.promoPlaceholder}
+                      className="h-9 text-xs uppercase font-mono tracking-wider bg-background"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleApplyPromo}
+                      disabled={validatePromo.isPending || !promoInput.trim()}
+                      size="sm"
+                      variant="outline"
+                      className="h-9 px-3 text-xs shrink-0"
+                    >
+                      {validatePromo.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : tForm.apply}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setIsPromoOpen(false);
+                        setPromoInput("");
+                        setPromoError("");
+                      }}
+                      size="sm"
+                      variant="ghost"
+                      className="h-9 w-9 p-0 shrink-0 text-muted-foreground"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  {promoError && <p className="text-[11px] text-destructive">{promoError}</p>}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-2 rounded bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs">
+              <span className="text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                Code : <strong className="font-mono">{appliedPromo.code}</strong> (-{appliedPromo.discount_percent}%)
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setAppliedPromo(null);
+                  setPromoInput("");
+                }}
+                className="text-xs text-muted-foreground hover:text-destructive p-1"
+                title="Supprimer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Live Calculation Recap */}
         <div className="bg-muted/40 rounded-lg p-3 sm:p-3.5 border border-border/50 text-xs space-y-1.5">
           <div className="flex justify-between text-muted-foreground">
             <span>{tForm.subtotal} :</span>
-            <span className="font-medium text-foreground">{subtotal.toLocaleString()} DH</span>
+            <span className="font-medium text-foreground">{rawSubtotal.toLocaleString()} DH</span>
           </div>
+
+          {tieredDiscount > 0 && (
+            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+              <span>{tForm.tieredDiscountLabel} (-{tieredDiscount}%) :</span>
+              <span>-{tieredDiscountAmount.toLocaleString()} DH</span>
+            </div>
+          )}
+
+          {appliedPromo && (
+            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+              <span>{tForm.promoDiscountLabel} (-{appliedPromo.discount_percent}%) :</span>
+              <span>-{promoDiscountAmount.toLocaleString()} DH</span>
+            </div>
+          )}
+
           <div className="flex justify-between items-center text-muted-foreground">
             <span>{tForm.shipping} :</span>
             <span className={cn("font-medium", isFreeShipping ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-foreground")}>
               {isFreeShipping ? tForm.free : (city ? `${shipping} DH` : tForm.dependingOnCity)}
             </span>
           </div>
+
           <div className="flex justify-between items-center pt-2 border-t border-border/50 text-xs sm:text-sm font-bold text-foreground">
             <span>{tForm.totalToPay} :</span>
             <span className="text-sm sm:text-base text-primary font-sans font-bold">{total.toLocaleString()} DH</span>
@@ -661,7 +893,7 @@ export const DirectOrderForm = ({
         {/* Submit Button */}
         <Button
           type="submit"
-          disabled={isSubmitting || product.stock === 0}
+          disabled={isSubmitting || (!isCart && product?.stock === 0) || (isCart && cartItems.length === 0)}
           className="w-full h-12 sm:h-14 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-xs sm:text-sm tracking-wider uppercase shadow-md shadow-primary/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2 px-3"
         >
           {isSubmitting ? (
