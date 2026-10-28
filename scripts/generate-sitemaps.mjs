@@ -17,7 +17,9 @@ const EXCLUDED_PATHS = new Set([
   "/cart",
   "/payment",
   "/404",
-  "/wishlist"
+  "/wishlist",
+  "/track-order",
+  "/*"
 ]);
 
 // Helper to format ISO Date without milliseconds/timezone offsets if possible, or standard ISO
@@ -184,8 +186,8 @@ async function main() {
   for (const route of resolvedRoutes) {
     const p = route.routePath;
 
-    // Filter out excluded routes, dynamic placeholders, and admins
-    if (EXCLUDED_PATHS.has(p) || p.startsWith("/admin") || p.includes(":")) {
+    // Filter out excluded routes, dynamic placeholders, wildcards, and admins
+    if (EXCLUDED_PATHS.has(p) || p.startsWith("/admin") || p.includes(":") || p.includes("*")) {
       continue;
     }
 
@@ -383,8 +385,16 @@ async function main() {
 
   // 7. Write Specialized Sitemaps
   writeSitemapFile("sitemap-pages.xml", uniqueStaticUrls);
-  writeSitemapFile("sitemap-products.xml", uniqueProductUrls);
-  writeSitemapFile("sitemap-images.xml", uniqueImageUrls, true);
+  if (uniqueProductUrls.length > 0) {
+    writeSitemapFile("sitemap-products.xml", uniqueProductUrls);
+  } else {
+    console.warn("⚠️ No dynamic products fetched (offline/sandbox), keeping existing sitemap-products.xml");
+  }
+  if (uniqueImageUrls.length > 0) {
+    writeSitemapFile("sitemap-images.xml", uniqueImageUrls, true);
+  } else {
+    console.warn("⚠️ No dynamic images fetched (offline/sandbox), keeping existing sitemap-images.xml");
+  }
 
   // 8. Generate Sitemap Index
   let indexXml = `<?xml version="1.0" encoding="UTF-8"?>\n`;

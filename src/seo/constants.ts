@@ -9,4 +9,5 @@ export const EXCLUDED_PATHS = new Set([
   "/payment",
   "/wishlist",
   "/auth",
+  "/track-order",
 ]);
