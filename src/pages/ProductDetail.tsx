@@ -1,7 +1,23 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ChevronLeft, ChevronRight, ArrowRight, ShoppingBag, MessageSquare, Flame, Truck } from "lucide-react";
+import { 
+  Heart, 
+  ChevronLeft, 
+  ChevronRight, 
+  ArrowRight, 
+  ShoppingBag, 
+  Flame, 
+  Truck,
+  Leaf,
+  ShieldCheck,
+  Clock,
+  Sparkles,
+  CheckCircle2,
+  Star,
+  MessageCircle,
+  Share2
+} from "lucide-react";
 
 import { ProductCard } from "@/components/ProductCard";
 import { QuantitySelector } from "@/components/QuantitySelector";
@@ -18,6 +34,12 @@ import { useBanner } from "@/hooks/useBanner";
 import { cn } from "@/lib/utils";
 import { getTranslated } from "@/utils/translationUtils";
 import { SEOManager } from "@/seo/components/SEOManager";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -60,15 +82,13 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <>
-        <div className="container-wide py-28 text-center">
-          <h1 className="font-serif text-4xl mb-4">{t("productDetail.notFound")}</h1>
-          <p className="text-muted-foreground mb-8">{t("productDetail.notFoundDesc")}</p>
-          <Button asChild className="rounded-none px-8 text-sm tracking-[0.1em] uppercase">
-            <Link to="/products">{t("index.viewAllProducts")}</Link>
-          </Button>
-        </div>
-      </>
+      <div className="container-wide py-28 text-center">
+        <h1 className="font-serif text-4xl mb-4">{t("productDetail.notFound")}</h1>
+        <p className="text-muted-foreground mb-8">{t("productDetail.notFoundDesc")}</p>
+        <Button asChild className="rounded-none px-8 text-sm tracking-[0.1em] uppercase">
+          <Link to="/products">{t("index.viewAllProducts")}</Link>
+        </Button>
+      </div>
     );
   }
 
@@ -96,7 +116,15 @@ const ProductDetail = () => {
 
   const basePrice = getBasePrice();
   const discount = getProductDiscount(product.id, product.collections || [], false, selectedWeight);
-  const discountedPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
+  const originalPrice = product.originalPrice;
+  const hasOriginal = originalPrice && originalPrice > basePrice;
+  const promoDiscount = discount > 0 ? discount : (hasOriginal ? Math.round((1 - basePrice / originalPrice) * 100) : 0);
+  const discountedPrice = promoDiscount > 0 ? Math.round(basePrice * (1 - promoDiscount / 100)) : basePrice;
+
+  const flashPromo = getFlashPromos().find(fp =>
+    fp.target_type === "all" ||
+    (fp.target_type === "specific_products" && fp.product_ids?.includes(product.id))
+  );
 
   const handleAddToCart = () => {
     addToCart({ ...product, price: discountedPrice }, quantity, selectedFlavors.slice(0, quantity), {}, selectedWeight);
@@ -117,6 +145,8 @@ const ProductDetail = () => {
 
   const productName = getTranslated(product, "name", lang);
   const productDescription = getTranslated(product, "description", lang) || product.description;
+  const productLongDescription = getTranslated(product, "longDescription", lang) || product.longDescription;
+  const productMaterials = getTranslated(product, "materials", lang) || product.materials;
   const isAvailable = product.stock > 0;
 
   return (
@@ -152,284 +182,449 @@ const ProductDetail = () => {
           },
         }}
       />
-      <div className="container-full py-6 border-b border-border">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <Link to="/products" className="hover:text-foreground transition-colors">{t("common.shop")}</Link>
-          <span className="text-border">/</span>
+
+      {/* Fil d'Ariane épuré */}
+      <div className="container-full py-5 border-b border-border/60">
+        <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+          <Link to="/" className="hover:text-foreground transition-colors">
+            {lang === 'ar' ? "الرئيسية" : lang === 'en' ? "Home" : "Accueil"}
+          </Link>
+          <span className="text-border/80">/</span>
+          <Link to="/products" className="hover:text-foreground transition-colors">
+            {t("common.shop")}
+          </Link>
           {collection && (
             <>
-              <Link to={`/products?collection=${collection.slug}`} className="hover:text-foreground transition-colors">{getTranslated(collection, "name", lang)}</Link>
-              <span className="text-border">/</span>
+              <span className="text-border/80">/</span>
+              <Link to={`/products?collection=${collection.slug}`} className="hover:text-foreground transition-colors font-medium">
+                {getTranslated(collection, "name", lang)}
+              </Link>
             </>
           )}
-          <span className="text-foreground">{getTranslated(product, "name", lang)}</span>
+          <span className="text-border/80">/</span>
+          <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-md">{productName}</span>
         </div>
       </div>
 
-      <section className="py-10 md:py-16">
+      <section className="py-8 md:py-14">
         <div className="container-full">
-          <div className="grid lg:grid-cols-12 gap-12 lg:gap-24 items-start">
-            <div className="lg:col-span-5 space-y-4">
-              <div
-                className="relative aspect-square max-h-[500px] overflow-hidden bg-muted/20 group cursor-zoom-in rounded-lg border border-border"
-                onMouseMove={handleMouseMove}
-                onMouseEnter={() => setIsZooming(true)}
-                onMouseLeave={() => setIsZooming(false)}
-              >
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={currentImageIndex}
-                    src={product.images[currentImageIndex]}
-                    alt={getTranslated(product, "name", lang)}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    style={{
-                      transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                      transform: isZooming ? "scale(2)" : "scale(1)"
-                    }}
-                    className="w-full h-full object-contain p-2 transition-transform duration-200 ease-out"
-                  />
-                </AnimatePresence>
-                {product.images.length > 1 && (
-                  <>
-                    <button onClick={prevImage} className="absolute start-3 top-1/2 -translate-y-1/2 p-2.5 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
-                      <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
-                    </button>
-                    <button onClick={nextImage} className="absolute end-3 top-1/2 -translate-y-1/2 p-2.5 bg-background/90 backdrop-blur-md hover:bg-background transition-all duration-300 opacity-0 group-hover:opacity-100 rounded-full shadow-sm">
-                      <ChevronRight className="w-5 h-5 rtl:rotate-180" />
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                      {product.images.map((_, index) => (
-                        <button key={index} onClick={() => setCurrentImageIndex(index)}
-                          className={cn("w-6 h-0.5 transition-all duration-500", index === currentImageIndex ? "bg-foreground" : "bg-foreground/20 hover:bg-foreground/40")} />
-                      ))}
-                    </div>
-                  </>
-                )}
-                <div className="absolute top-3 start-3 flex flex-col gap-1.5 z-10">
-                  {product.new && (
-                    <span className="px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase bg-foreground text-background rounded-sm">{t("common.new")}</span>
-                  )}
-                  {product.stock === 0 && (
-                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-[0.2em] uppercase bg-destructive text-destructive-foreground rounded-sm">{t("common.outOfStock")}</span>
-                  )}
-                </div>
-              </div>
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+            
+            {/* Colonne Gauche : Galerie Photo "Luxury Apothecary" */}
+            <div className="lg:col-span-6 flex flex-col-reverse sm:flex-row gap-4 items-start">
+              {/* Miniatures verticales (Desktop) */}
               {product.images.length > 1 && (
-                <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2">
+                <div className="hidden sm:flex flex-col gap-3 w-20 shrink-0 max-h-[580px] overflow-y-auto no-scrollbar">
                   {product.images.map((image, index) => (
-                    <button key={index} onClick={() => setCurrentImageIndex(index)}
-                      className={cn("w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 overflow-hidden rounded-lg transition-all duration-300 border border-border",
-                        index === currentImageIndex ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "opacity-60 hover:opacity-100")}>
-                      <img src={image} alt={`${getTranslated(product, "name", lang)} ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={cn(
+                        "w-20 h-24 rounded-xl overflow-hidden border-2 transition-all duration-300 relative bg-muted/20",
+                        index === currentImageIndex 
+                          ? "border-primary shadow-sm opacity-100 ring-2 ring-primary/20" 
+                          : "border-border/60 opacity-60 hover:opacity-100 hover:border-border"
+                      )}
+                    >
+                      <img
+                        src={image}
+                        alt={`${productName} thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
                     </button>
                   ))}
                 </div>
               )}
-            </div>
 
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-              className="lg:col-span-7 lg:sticky lg:top-28 lg:self-start">
-              <div className="flex flex-wrap items-center gap-3 mb-2">
-                {collection && (
-                  <Link to={`/products?collection=${collection.slug}`}
-                    className="inline-block text-[11px] font-semibold tracking-[0.3em] uppercase text-primary hover:text-primary/80 transition-colors">{getTranslated(collection, "name", lang)}</Link>
-                )}
-                {product.free_shipping && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded-full text-[11px] font-semibold tracking-wider uppercase shadow-sm">
-                    <Truck className="w-3.5 h-3.5" />
-                    {t("common.freeShipping")}
-                  </span>
-                )}
-              </div>
-              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-foreground mb-4 leading-tight break-words">{getTranslated(product, "name", lang)}</h1>
-              {(() => {
-                const discount = getProductDiscount(product.id, product.collections || []);
-                const basePrice = getBasePrice();
-                const originalPrice = product.originalPrice;
-                const hasOriginal = originalPrice && originalPrice > basePrice;
-                const promoDiscount = discount > 0 ? discount : (hasOriginal ? Math.round((1 - basePrice / originalPrice) * 100) : 0);
-                const flashPromo = getFlashPromos().find(fp =>
-                  fp.target_type === "all" ||
-                  (fp.target_type === "specific_products" && fp.product_ids?.includes(product.id))
-                );
-                return (
-                  <div className="mb-8">
-                    {promoDiscount > 0 ? (
-                      <div className="flex items-baseline gap-4">
-                        <p className="text-3xl font-sans font-bold text-destructive tracking-tight">
-                          {Math.round(basePrice * (1 - promoDiscount / 100)).toLocaleString()}<span className="text-lg font-medium text-muted-foreground/70 ml-1.5">DH</span>
-                        </p>
-                        <p className="text-lg font-sans text-muted-foreground line-through opacity-60">
-                          {basePrice.toLocaleString()}<span className="text-sm ml-1">DH</span>
-                        </p>
-                        <span className="px-2 py-1 text-xs font-semibold bg-destructive text-destructive-foreground rounded-sm self-center">-{promoDiscount}%</span>
-                      </div>
-                    ) : hasOriginal ? (
-                      <div className="flex items-baseline gap-4">
-                        <p className="text-3xl font-sans font-bold text-foreground tracking-tight">
-                          {basePrice.toLocaleString()}<span className="text-lg font-medium text-muted-foreground/70 ml-1.5">DH</span>
-                        </p>
-                        <p className="text-lg font-sans text-muted-foreground line-through opacity-60">
-                          {originalPrice.toLocaleString()}<span className="text-sm ml-1">DH</span>
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-3xl font-sans font-bold text-foreground tracking-tight">
-                        {basePrice.toLocaleString()}<span className="text-lg font-medium text-muted-foreground/70 ml-1.5">DH</span>
-                      </p>
+              {/* Image Principale avec Zoom et Badges */}
+              <div className="flex-1 w-full space-y-3">
+                <div
+                  className="relative aspect-[4/5] sm:aspect-square md:aspect-[4/5] max-h-[580px] w-full overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-b from-muted/30 via-muted/10 to-card group cursor-zoom-in shadow-sm flex items-center justify-center"
+                  onMouseMove={handleMouseMove}
+                  onMouseEnter={() => setIsZooming(true)}
+                  onMouseLeave={() => setIsZooming(false)}
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={currentImageIndex}
+                      src={product.images[currentImageIndex]}
+                      alt={productName}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      style={{
+                        transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                        transform: isZooming ? "scale(2.2)" : "scale(1)"
+                      }}
+                      className="w-full h-full object-cover transition-transform duration-150 ease-out select-none"
+                    />
+                  </AnimatePresence>
+
+                  {/* Badges Flottants de Luxe */}
+                  <div className="absolute top-4 start-4 flex flex-col gap-2 z-10">
+                    {product.new && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-bold tracking-widest uppercase bg-foreground text-background rounded-full shadow-sm">
+                        <Sparkles className="w-3 h-3" />
+                        {t("common.new")}
+                      </span>
                     )}
-                    {flashPromo && (
-                      <div className="mt-3">
-                        <FlashCountdown endsAt={flashPromo.ends_at} label="Offre flash" />
-                      </div>
+
+                    {product.free_shipping && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold tracking-wider uppercase bg-emerald-600 text-white rounded-full shadow-sm">
+                        <Truck className="w-3.5 h-3.5" />
+                        {t("common.freeShipping")}
+                      </span>
                     )}
+
                     {product.stock === 0 && (
-                      <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-sm">
-                        <p className="text-destructive text-sm font-medium">{t("common.outOfStock")}</p>
-                      </div>
+                      <span className="px-3 py-1 text-[11px] font-bold tracking-wider uppercase bg-destructive text-destructive-foreground rounded-full shadow-sm">
+                        {t("common.outOfStock")}
+                      </span>
                     )}
                   </div>
-                );
-              })()}
-              <div className="w-12 h-px bg-border mb-8" />
-              <p className="text-muted-foreground leading-normal mb-10 whitespace-pre-wrap">{getTranslated(product, "longDescription", lang)}</p>
-              <div className="space-y-5 mb-10 pb-10 border-b border-border">
-                <div>
-                  <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground block mb-1.5">{t("productDetail.ingredients")}</span>
-                  <span className="text-sm text-foreground whitespace-pre-wrap">{getTranslated(product, "materials", lang)}</span>
-                </div>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
-                   {product.weight_prices && product.weight_prices.length > 1 ? (
-                    <div>
-                      <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground block mb-3">
-                        {lang === 'ar' ? "اختر الوزن" : lang === 'en' ? "Choose weight" : "Choisir le poids"}
-                      </span>
-                      <div className="flex flex-wrap gap-3">
-                        {product.weight_prices.map((wp) => (
+
+                  {/* Flèches de navigation image */}
+                  {product.images.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                        className="absolute start-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 hover:bg-background backdrop-blur-md transition-all duration-200 opacity-0 group-hover:opacity-100 rounded-full shadow-md flex items-center justify-center border border-border/60 text-foreground"
+                        aria-label="Previous image"
+                      >
+                        <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 hover:bg-background backdrop-blur-md transition-all duration-200 opacity-0 group-hover:opacity-100 rounded-full shadow-md flex items-center justify-center border border-border/60 text-foreground"
+                        aria-label="Next image"
+                      >
+                        <ChevronRight className="w-5 h-5 rtl:rotate-180" />
+                      </button>
+
+                      {/* Indicateurs de pagination (Mobile) */}
+                      <div className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                        {product.images.map((_, index) => (
                           <button
-                            key={wp.weight}
-                            type="button"
-                            onClick={() => setSelectedWeight(wp.weight)}
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
                             className={cn(
-                              "px-4 py-2 text-xs font-semibold tracking-wider uppercase border transition-all duration-300",
-                              String(selectedWeight) === String(wp.weight)
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-border hover:border-foreground bg-transparent text-foreground"
+                              "h-1.5 rounded-full transition-all duration-300",
+                              index === currentImageIndex ? "w-6 bg-primary" : "w-1.5 bg-foreground/20"
                             )}
-                          >
-                            {formatWeight(wp.weight)}
-                          </button>
+                          />
                         ))}
                       </div>
-                    </div>
-                  ) : (
-                    (product.weight || (product.weight_prices && product.weight_prices.length === 1)) && (
-                      <div>
-                        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground block mb-1.5">{t("common.netWeight")}</span>
-                        <span className="text-sm text-foreground">
-                          {t("common.netWeight")} : {formatWeight(product.weight || product.weight_prices?.[0]?.weight)}
-                        </span>
-                      </div>
-                    )
+                    </>
                   )}
+                </div>
 
-                  <div>
-                    <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground block mb-3">
-                      {lang === 'ar' ? "السعر" : lang === 'en' ? "Price" : "Prix"}
-                    </span>
-                    <div className="text-2xl font-sans font-bold text-foreground">
-                      {discountedPrice.toLocaleString()}<span className="text-sm font-medium text-muted-foreground/70 ml-1.5">DH</span>
-                      {discount > 0 && (
-                        <span className="text-sm font-sans text-muted-foreground line-through opacity-60 ml-2">
-                          {basePrice.toLocaleString()} DH
-                        </span>
-                      )}
-                    </div>
+                {/* Miniatures Défilantes (Mobile) */}
+                {product.images.length > 1 && (
+                  <div className="flex sm:hidden gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    {product.images.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={cn(
+                          "w-16 h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all duration-200",
+                          index === currentImageIndex ? "border-primary" : "border-border/60 opacity-60"
+                        )}
+                      >
+                        <img src={image} alt={`thumb-${index}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
-                </div>
+                )}
               </div>
-              <div className={cn("grid gap-6 mb-8", product.flavors && product.flavors.length > 0 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1")}>
-              <div className="flex items-center gap-2 sm:gap-3 w-full mb-3">
-                <QuantitySelector
-                  quantity={quantity}
-                  className="h-12 sm:h-14 shrink-0 bg-background"
-                  onQuantityChange={(q) => {
-                    setQuantity(q);
-                    const currentFlavors = getTranslated(product, "flavors", lang) as string[];
-                    if (currentFlavors && currentFlavors.length > 0) {
-                      const newFlavors = [...selectedFlavors];
-                      if (newFlavors.length < q) {
-                        const defaultFlavor = currentFlavors[0];
-                        while (newFlavors.length < q) newFlavors.push(defaultFlavor);
-                      } else if (newFlavors.length > q) {
-                        newFlavors.splice(q);
-                      }
-                      setSelectedFlavors(newFlavors);
-                    }
-                  }}
-                />
-                <Button
-                  size="lg"
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  className="flex-1 rounded-none h-12 sm:h-14 text-xs sm:text-sm tracking-[0.1em] sm:tracking-[0.15em] uppercase py-0 flex items-center justify-center gap-2 btn-premium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ShoppingBag className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{product.stock === 0 ? t("common.unavailable") : t("common.addToCart")}</span>
-                </Button>
-              </div>
+            </div>
 
-                <div className="grid grid-cols-[1fr_auto] gap-3 w-full">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="rounded-none h-12 sm:h-14 text-xs sm:text-sm tracking-normal sm:tracking-[0.05em] uppercase group px-3"
-                    onClick={handleWishlistToggle}
-                  >
-                    <Heart className={cn("w-4 h-4 me-2 shrink-0 transition-all duration-300 group-hover:scale-110", inWishlist && "fill-primary text-primary")} />
-                    <span className="sm:hidden">{inWishlist ? (lang === 'ar' ? "محفوظ" : lang === 'en' ? "Saved" : "Sauvegardé") : (lang === 'ar' ? "المفضلة" : lang === 'en' ? "Favorites" : "Favoris")}</span>
-                    <span className="hidden sm:inline">{inWishlist ? t("productDetail.saved") : t("productDetail.addToFavorites")}</span>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-12 sm:w-16 rounded-none h-12 sm:h-14 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all duration-300 shrink-0 group flex items-center justify-center p-0"
-                    onClick={() => {
-                      const phone = "212699928463";
-                      const url = window.location.href;
-                      const weightText = selectedWeight ? ` (Poids : ${/^\d+(\.\d+)?$/.test(String(selectedWeight).trim()) ? `${selectedWeight}g` : selectedWeight})` : "";
-                      const message = encodeURIComponent(`Bonjour Aliaa Care, j'aimerais avoir plus d'informations sur le produit : ${getTranslated(product, "name", lang)}${weightText}\nPrix : ${discountedPrice} DH\nLien : ${url}`);
-                      window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
-                    }}
-                    title={t("productDetail.whatsappQuestion")}
-                  >
-                    <WhatsAppIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
-                  </Button>
+            {/* Colonne Droite : Informations Produit & Commande "Luxury Apothecary" */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="lg:col-span-6 space-y-6"
+            >
+              {/* En-tête : Collection + Titre */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  {collection && (
+                    <Link
+                      to={`/products?collection=${collection.slug}`}
+                      className="inline-block text-[11px] font-bold tracking-[0.25em] uppercase text-primary hover:text-primary/80 transition-colors"
+                    >
+                      {getTranslated(collection, "name", lang)}
+                    </Link>
+                  )}
                 </div>
-              </div>
-              
-              {/* FOMO Stock Alert */}
-              {product.stock > 0 && product.stock < 5 && (
-                <div className="mt-4 flex items-center gap-2 text-destructive animate-pulse bg-destructive/5 border border-destructive/10 px-4 py-3 rounded">
-                  <Flame className="w-4 h-4 text-destructive shrink-0" />
-                  <p className="text-xs font-semibold tracking-wide">
-                    {lang === 'ar' 
-                      ? `عجّل! المتبقي ${product.stock} قطع فقط في المخزون!` 
-                      : lang === 'en' 
-                      ? `Hurry up! Only ${product.stock} items left in stock!` 
-                      : `Dépêchez-vous ! Plus que ${product.stock} exemplaires disponibles en stock !`
-                    }
+
+                <h1 className="font-serif text-3xl sm:text-4xl md:text-[2.65rem] text-foreground font-bold tracking-tight leading-[1.15]">
+                  {productName}
+                </h1>
+
+                {productDescription && (
+                  <p className="text-sm text-muted-foreground leading-relaxed pt-1">
+                    {productDescription}
                   </p>
+                )}
+              </div>
+
+              {/* Bloc Prix Unique Épuré (Sans doublon) */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-muted/25 border border-border/60 space-y-3">
+                <div className="flex items-baseline flex-wrap gap-3">
+                  <span className="text-3xl sm:text-4xl font-sans font-extrabold text-foreground tracking-tight">
+                    {discountedPrice.toLocaleString()}{" "}
+                    <span className="text-lg font-bold text-primary font-serif">DH</span>
+                  </span>
+
+                  {promoDiscount > 0 && (
+                    <>
+                      <span className="text-lg font-sans text-muted-foreground line-through opacity-60">
+                        {basePrice.toLocaleString()} DH
+                      </span>
+                      <span className="px-2.5 py-0.5 text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20 rounded-full">
+                        -{promoDiscount}%
+                      </span>
+                    </>
+                  )}
+                  {hasOriginal && promoDiscount === 0 && (
+                    <span className="text-lg font-sans text-muted-foreground line-through opacity-60">
+                      {originalPrice.toLocaleString()} DH
+                    </span>
+                  )}
+                </div>
+
+                {/* Offre Flash */}
+                {flashPromo && (
+                  <div className="pt-1">
+                    <FlashCountdown endsAt={flashPromo.ends_at} label="Offre Flash Limitée" />
+                  </div>
+                )}
+
+                {/* Stock FOMO Alert */}
+                {product.stock > 0 && product.stock < 5 && (
+                  <div className="flex items-center gap-2 text-destructive animate-pulse bg-destructive/5 border border-destructive/10 px-3.5 py-2 rounded-lg">
+                    <Flame className="w-4 h-4 text-destructive shrink-0" />
+                    <p className="text-xs font-semibold">
+                      {lang === 'ar' 
+                        ? `عجّل! المتبقي ${product.stock} قطع فقط في المخزون!` 
+                        : lang === 'en' 
+                        ? `Hurry up! Only ${product.stock} items left in stock!` 
+                        : `Forte demande ! Plus que ${product.stock} exemplaires disponibles.`}
+                    </p>
+                  </div>
+                )}
+
+                {product.stock === 0 && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs font-bold uppercase tracking-wider">
+                    {t("common.outOfStock")}
+                  </div>
+                )}
+              </div>
+
+              {/* Choix du Poids / Contenance */}
+              {product.weight_prices && product.weight_prices.length > 1 && (
+                <div className="space-y-2.5">
+                  <label className="text-xs font-bold tracking-widest uppercase text-muted-foreground block">
+                    {lang === 'ar' ? "اختر الوزن / السعة :" : lang === 'en' ? "Choose Weight / Size:" : "Contenance / Poids :"}
+                  </label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {product.weight_prices.map((wp) => {
+                      const isSelected = String(selectedWeight) === String(wp.weight);
+                      return (
+                        <button
+                          key={wp.weight}
+                          type="button"
+                          onClick={() => setSelectedWeight(wp.weight)}
+                          className={cn(
+                            "px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all border flex items-center gap-2",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                              : "border-border/80 hover:border-foreground bg-background text-foreground hover:bg-muted/30"
+                          )}
+                        >
+                          <span>{formatWeight(wp.weight)}</span>
+                          <span className={cn("text-[11px] opacity-80", isSelected ? "text-primary-foreground" : "text-muted-foreground")}>
+                            ({wp.price} DH)
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              {/* Direct Quick Order Form */}
-              <div className="mt-8">
+              {/* Choix des Parfums / Goûts */}
+              {product.flavors && product.flavors.length > 0 && (
+                <div className="space-y-2.5">
+                  <label className="text-xs font-bold tracking-widest uppercase text-muted-foreground block">
+                    {lang === 'ar' ? "اختر النكهة :" : lang === 'en' ? "Choose flavor:" : "Parfum / Goût :"}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {product.flavors.map((flavor) => {
+                      const isSelected = selectedFlavors.includes(flavor);
+                      return (
+                        <button
+                          key={flavor}
+                          type="button"
+                          onClick={() => setSelectedFlavors([flavor])}
+                          className={cn(
+                            "px-3.5 py-2 rounded-xl text-xs font-medium transition-all border",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground shadow-sm font-semibold"
+                              : "border-border/80 hover:border-foreground bg-background text-foreground"
+                          )}
+                        >
+                          {flavor}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Boutons d'Action Panier + Favoris + WhatsApp */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3">
+                  <QuantitySelector
+                    quantity={quantity}
+                    onQuantityChange={setQuantity}
+                    className="h-12 sm:h-14 shrink-0 bg-background rounded-xl border border-border"
+                  />
+                  <Button
+                    size="lg"
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0}
+                    className="flex-1 rounded-xl h-12 sm:h-14 text-xs sm:text-sm tracking-wider uppercase py-0 flex items-center justify-center gap-2 btn-premium shadow-md shadow-primary/10 disabled:opacity-50"
+                  >
+                    <ShoppingBag className="w-4 h-4 shrink-0" />
+                    <span className="truncate">
+                      {product.stock === 0 ? t("common.unavailable") : t("common.addToCart")}
+                    </span>
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-[1fr_auto] gap-2.5">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleWishlistToggle}
+                    className="rounded-xl h-11 text-xs tracking-wider uppercase border-border/80 hover:bg-muted/40"
+                  >
+                    <Heart className={cn("w-4 h-4 me-2 transition-all duration-300", inWishlist && "fill-primary text-primary")} />
+                    <span>{inWishlist ? t("productDetail.saved") : t("productDetail.addToFavorites")}</span>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => {
+                      const phone = "212699928463";
+                      const url = window.location.href;
+                      const weightText = selectedWeight ? ` (Poids : ${formatWeight(selectedWeight)})` : "";
+                      const message = encodeURIComponent(`Bonjour Aliaa Care, j'aimerais avoir plus d'informations sur le produit : ${productName}${weightText}\nPrix : ${discountedPrice} DH\nLien : ${url}`);
+                      window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+                    }}
+                    className="rounded-xl h-11 px-4 border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all flex items-center gap-2 text-xs font-semibold"
+                    title={t("productDetail.whatsappQuestion")}
+                  >
+                    <WhatsAppIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">WhatsApp</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Accordéons Interactifs "Luxury Apothecary" (Description, Ingrédients, Rituel, Livraison) */}
+              <div className="pt-2">
+                <Accordion type="single" collapsible defaultValue="description" className="w-full space-y-2">
+                  
+                  {/* Onglet 1 : Description & Bienfaits */}
+                  <AccordionItem value="description" className="border border-border/70 rounded-xl px-4 bg-card/60">
+                    <AccordionTrigger className="hover:no-underline py-4 text-sm font-bold text-foreground">
+                      <span className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        {lang === 'ar' ? "الوصف والفوائد" : lang === 'en' ? "Description & Benefits" : "Description & Bienfaits"}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap pb-4">
+                      {productLongDescription || productDescription}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Onglet 2 : Ingrédients & Composition */}
+                  {productMaterials && (
+                    <AccordionItem value="ingredients" className="border border-border/70 rounded-xl px-4 bg-card/60">
+                      <AccordionTrigger className="hover:no-underline py-4 text-sm font-bold text-foreground">
+                        <span className="flex items-center gap-2">
+                          <Leaf className="w-4 h-4 text-emerald-600" />
+                          {t("productDetail.ingredients")}
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed pb-4">
+                        <p className="whitespace-pre-wrap">{productMaterials}</p>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+
+                  {/* Onglet 3 : Rituel & Mode d'emploi */}
+                  <AccordionItem value="usage" className="border border-border/70 rounded-xl px-4 bg-card/60">
+                    <AccordionTrigger className="hover:no-underline py-4 text-sm font-bold text-foreground">
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-primary" />
+                        {lang === 'ar' ? "طقوس الاستخدام" : lang === 'en' ? "Application Ritual" : "Rituel d'application"}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-2 pb-4">
+                      <p>
+                        {lang === 'ar'
+                          ? "استخدمي هذا المستحضر بانتظام كجزء من روتينك اليومي للعناية الطبيعية للحصول على أفضل النتائج."
+                          : lang === 'en'
+                          ? "Incorporate this natural formula into your daily self-care ritual for lasting and revitalizing results."
+                          : "Intégrez ce soin dans votre rituel de beauté quotidien pour nourrir, régénérer et sublimer votre corps naturellement."}
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Onglet 4 : Livraison & Garantie */}
+                  <AccordionItem value="shipping" className="border border-border/70 rounded-xl px-4 bg-card/60">
+                    <AccordionTrigger className="hover:no-underline py-4 text-sm font-bold text-foreground">
+                      <span className="flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-primary" />
+                        {t("productDetail.shipping")} & Retours
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-2 pb-4">
+                      <p>
+                        • <strong>Délais d'expédition :</strong> 24h à 48h ouvrées partout au Maroc.
+                      </p>
+                      <p>
+                        • <strong>Mode de paiement :</strong> En espèces au livreur après réception de votre commande.
+                      </p>
+                      <p>
+                        • <strong>Livraison offerte :</strong> {product.free_shipping ? "Oui, la livraison est 100% gratuite sur ce produit !" : `Gratuite dès ${freeShippingThreshold} DH d'achats.`}
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                </Accordion>
+              </div>
+
+              {/* Formulaire de Commande Directe Express COD (Placé après les informations du produit) */}
+              <div id="direct-order-section" className="pt-4 border-t border-border/60">
+                <div className="mb-3">
+                  <span className="text-xs font-bold tracking-widest uppercase text-primary flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Commande Express Directe (Paiement à la livraison)
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Remplissez vos coordonnées ci-dessous pour recevoir votre colis à domicile :
+                  </p>
+                </div>
+
                 <DirectOrderForm
                   product={product}
                   selectedWeight={selectedWeight}
@@ -439,46 +634,61 @@ const ProductDetail = () => {
                 />
               </div>
 
-              <div className="mt-8 pt-6 border-t border-border">
-                {product.free_shipping ? (
-                  <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-800/40 p-4 rounded-lg">
-                    <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                        {t("common.freeShipping")}
-                      </p>
-                      <p className="text-xs text-emerald-700/90 dark:text-emerald-400/90 mt-0.5">
-                        {t("productDetail.freeShippingIncluded")}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground/60 mb-1">{t("productDetail.shipping")}</p>
-                    <p className="text-xs text-muted-foreground">{t("productDetail.freeShipping").replace("500", freeShippingThreshold.toString())}</p>
-                  </div>
-                )}
-              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
+      {/* Barre d'Action Flottante Fixe sur Mobile (Sticky Bottom Bar) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border p-3 flex items-center justify-between gap-3 shadow-2xl">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-muted-foreground truncate">{productName}</p>
+          <p className="text-base font-bold font-sans text-primary">
+            {discountedPrice.toLocaleString()} DH
+            {selectedWeight && (
+              <span className="text-[11px] font-normal text-muted-foreground ml-1">
+                ({formatWeight(selectedWeight)})
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            onClick={() => {
+              document.getElementById('direct-order-section')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            disabled={product.stock === 0}
+            className="h-10 px-4 text-xs font-bold uppercase tracking-wider bg-primary hover:bg-primary/95 text-primary-foreground rounded-lg shadow-md"
+          >
+            {lang === 'ar' ? "اطلب الآن" : lang === 'en' ? "Order Now" : "Commander"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Produits Connexes / Recommandations */}
       {relatedProducts.length > 0 && (
-        <section className="py-20 md:py-28 bg-linen">
+        <section className="py-20 md:py-28 bg-linen border-t border-border/50">
           <div className="container-full">
             <div className="flex items-end justify-between mb-12">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-primary mb-3">{t("productDetail.youMayAlsoLike")}</p>
-                <h2 className="font-serif text-3xl md:text-4xl text-foreground">{t("productDetail.moreFrom")} {getTranslated(collection as any, "name", lang)}</h2>
+                <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-primary mb-2">
+                  {t("productDetail.youMayAlsoLike")}
+                </p>
+                <h2 className="font-serif text-3xl md:text-4xl text-foreground font-bold">
+                  {t("productDetail.moreFrom")} {getTranslated(collection as any, "name", lang)}
+                </h2>
               </div>
-              <Link to={`/products?collection=${collection?.slug}`}
-                className="hidden md:flex items-center gap-2 text-sm tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground transition-colors">
+              <Link
+                to={`/products?collection=${collection?.slug}`}
+                className="hidden md:flex items-center gap-2 text-sm tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground transition-colors font-medium"
+              >
                 {t("common.viewAll")} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
               </Link>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 md:gap-10">
-              {relatedProducts.map((p, index) => <ProductCard key={p.id} product={p} index={index} />)}
+              {relatedProducts.map((p, index) => (
+                <ProductCard key={p.id} product={p} index={index} />
+              ))}
             </div>
           </div>
         </section>
@@ -488,4 +698,3 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
-
