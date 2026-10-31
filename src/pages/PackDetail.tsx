@@ -183,6 +183,7 @@ const PackDetail = () => {
     : rawName;
   const packDescription = getTranslated(pack, "description", lang) || pack.description;
   const packLongDescription = getTranslated(pack, "long_description", lang) || pack.long_description;
+  const packRitual = getTranslated(pack, "ritual", lang) || (pack as any).ritual || packLongDescription;
 
   return (
     <>
@@ -656,16 +657,39 @@ const PackDetail = () => {
               <div className="pt-2">
                 <Accordion type="single" collapsible defaultValue="description" className="w-full space-y-2">
                   
-                  {/* Onglet 1 : Description & Rituel du Pack */}
+                  {/* Onglet 1 : Description & Bienfaits du Pack */}
                   <AccordionItem value="description" className="border border-border/70 rounded-xl px-4 bg-card/60">
                     <AccordionTrigger className="hover:no-underline py-4 text-sm font-bold text-foreground">
                       <span className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-primary" />
-                        Rituel & Bienfaits du Pack
+                        {lang === 'ar' ? "الوصف والفوائد" : lang === 'en' ? "Pack Description & Benefits" : "Description & Bienfaits du Pack"}
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap pb-4">
-                      {packLongDescription || packDescription}
+                      {packDescription || packLongDescription}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Onglet 2 : Rituel d'application & Ordre des soins */}
+                  <AccordionItem value="usage" className="border border-border/70 rounded-xl px-4 bg-card/60">
+                    <AccordionTrigger className="hover:no-underline py-4 text-sm font-bold text-foreground">
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-primary" />
+                        {lang === 'ar' ? "طقوس الاستخدام والترتيب" : lang === 'en' ? "Application Ritual & Steps" : "Rituel d'application"}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed pb-4">
+                      {packRitual ? (
+                        <p className="whitespace-pre-wrap leading-relaxed">{packRitual}</p>
+                      ) : (
+                        <p className="leading-relaxed">
+                          {lang === 'ar'
+                            ? "للحصول على أفضل النتائج، اتبعي خطوات الاستخدام الموصى بها لكل منتج في هذه الباقة بانتظام."
+                            : lang === 'en'
+                            ? "For optimal results, follow the recommended steps using each product in this pack in synergy as part of your daily self-care ritual."
+                            : "Pour une efficacité optimale, utilisez les soins de ce coffret en synergie selon votre routine quotidienne bien-être."}
+                        </p>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
 

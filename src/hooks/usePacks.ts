@@ -13,6 +13,9 @@ export interface DbPack {
   long_description: string;
   long_description_ar?: string | null;
   long_description_en?: string | null;
+  ritual?: string | null;
+  ritual_ar?: string | null;
+  ritual_en?: string | null;
   price: number;
   image: string;
   images: string[];
@@ -69,6 +72,9 @@ async function fetchPacks(): Promise<DbPack[]> {
       ...pack,
       description: pack.description || "",
       long_description: pack.long_description || "",
+      ritual: (pack as any).ritual || pack.long_description || "",
+      ritual_ar: (pack as any).ritual_ar || pack.long_description_ar || null,
+      ritual_en: (pack as any).ritual_en || pack.long_description_en || null,
       image: pack.image || "/placeholder.svg",
       images: imagesMapped.length > 0 ? imagesMapped : [pack.image || "/placeholder.svg"],
       featured: pack.featured ?? false,
@@ -112,14 +118,28 @@ export function useAddPack() {
       description_en?: string;
       long_description_ar?: string;
       long_description_en?: string;
+      ritual?: string;
+      ritual_ar?: string;
+      ritual_en?: string;
     }) => {
       const { items, images, ...packData } = input;
-      const { data, error } = await supabase
+      let res = await supabase
         .from("packs")
         .insert(packData)
         .select()
         .single();
-      if (error) throw error;
+
+      if (res.error && res.error.message && (res.error.message.includes("ritual") || res.error.message.includes("schema cache"))) {
+        const { ritual, ritual_ar, ritual_en, ...fallbackPack } = packData as any;
+        res = await supabase
+          .from("packs")
+          .insert(fallbackPack)
+          .select()
+          .single();
+      }
+
+      if (res.error) throw res.error;
+      const data = res.data;
 
       if (images && images.length > 0 && data) {
         const packImages = images.map((url, i) => ({
@@ -152,14 +172,43 @@ export function useUpdatePack() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      updates: { name: string; slug: string; description: string; long_description: string; price: number; image: string; active: boolean; featured: boolean; free_shipping?: boolean | null; name_ar?: string | null; name_en?: string | null; description_ar?: string | null; description_en?: string | null; long_description_ar?: string | null; long_description_en?: string | null };
+      updates: {
+        name: string;
+        slug: string;
+        description: string;
+        long_description: string;
+        price: number;
+        image: string;
+        active: boolean;
+        featured: boolean;
+        free_shipping?: boolean | null;
+        name_ar?: string | null;
+        name_en?: string | null;
+        description_ar?: string | null;
+        description_en?: string | null;
+        long_description_ar?: string | null;
+        long_description_en?: string | null;
+        ritual?: string | null;
+        ritual_ar?: string | null;
+        ritual_en?: string | null;
+      };
       images: string[];
       items: { product_id: string; quantity: number; selected_weight?: string | null }[];
     }) => {
-      const { error } = await supabase
+      let { error } = await supabase
         .from("packs")
         .update(input.updates)
         .eq("id", input.id);
+
+      if (error && error.message && (error.message.includes("ritual") || error.message.includes("schema cache"))) {
+        const { ritual, ritual_ar, ritual_en, ...fallbackUpdates } = input.updates as any;
+        const retryRes = await supabase
+          .from("packs")
+          .update(fallbackUpdates)
+          .eq("id", input.id);
+        error = retryRes.error;
+      }
+
       if (error) throw error;
 
       if (input.images !== undefined) {
@@ -175,15 +224,18 @@ export function useUpdatePack() {
         }
       }
 
-      await supabase.from("pack_items").delete().eq("pack_id", input.id);
-      if (input.items.length > 0) {
-        const packItems = input.items.map((i) => ({ 
-          pack_id: input.id, 
-          product_id: i.product_id, 
-          quantity: i.quantity,
-          selected_weight: i.selected_weight || null
-        }));
-        await supabase.from("pack_items").insert(packItems);
+      if (input.items !== undefined) {
+        await supabase.from("pack_items").delete().eq("pack_id", input.id);
+        if (input.items.length > 0) {
+          const packItems = input.items.map((i) => ({ 
+            pack_id: input.id, 
+            product_id: i.product_id, 
+            quantity: i.quantity,
+            selected_weight: i.selected_weight || null
+          }));
+          const { error: itemsError } = await supabase.from("pack_items").insert(packItems);
+          if (itemsError) throw itemsError;
+        }
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["packs"] }),

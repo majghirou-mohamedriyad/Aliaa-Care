@@ -61,7 +61,8 @@ import {
   ExternalLink,
   Sparkles,
   Tag,
-  ArrowUpRight
+  ArrowUpRight,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +73,7 @@ interface EditingProduct {
   price: number;
   description: string;
   long_description: string;
+  ritual: string;
   materials: string;
   name_ar: string;
   name_en: string;
@@ -79,6 +81,8 @@ interface EditingProduct {
   description_en: string;
   long_description_ar: string;
   long_description_en: string;
+  ritual_ar: string;
+  ritual_en: string;
   materials_ar: string;
   materials_en: string;
   weight?: string;
@@ -97,9 +101,9 @@ interface EditingProduct {
 }
 
 const emptyProduct: EditingProduct = {
-  name: "", slug: "", price: 0, description: "", long_description: "",
+  name: "", slug: "", price: 0, description: "", long_description: "", ritual: "",
   materials: "", name_ar: "", name_en: "", description_ar: "", description_en: "",
-  long_description_ar: "", long_description_en: "", materials_ar: "", materials_en: "",
+  long_description_ar: "", long_description_en: "", ritual_ar: "", ritual_en: "", materials_ar: "", materials_en: "",
   weight: undefined, weight_prices: [], images: [], stock: 10, active: true, visible: true,
   featured: false, is_new: false, free_shipping: false, category_ids: [], flavors: [], flavors_ar: [], flavors_en: [],
 };
@@ -168,6 +172,7 @@ const AdminProducts = () => {
           price: p.price,
           description: p.description || "",
           long_description: p.long_description || "",
+          ritual: (p as any).ritual || p.long_description || "",
           materials: p.materials || "",
           name_ar: p.name_ar || "",
           name_en: p.name_en || "",
@@ -175,6 +180,8 @@ const AdminProducts = () => {
           description_en: p.description_en || "",
           long_description_ar: p.long_description_ar || "",
           long_description_en: p.long_description_en || "",
+          ritual_ar: (p as any).ritual_ar || p.long_description_ar || "",
+          ritual_en: (p as any).ritual_en || p.long_description_en || "",
           materials_ar: p.materials_ar || "",
           materials_en: p.materials_en || "",
           weight: p.weight ? String(p.weight) : undefined,
@@ -319,6 +326,10 @@ const AdminProducts = () => {
     const basePrice = Number(firstWeightPrice.price);
     const baseWeight = firstWeightPrice.weight ? String(firstWeightPrice.weight) : null;
 
+    const ritualVal = editingProduct.ritual || editingProduct.long_description || "";
+    const ritualArVal = editingProduct.ritual_ar || editingProduct.long_description_ar || "";
+    const ritualEnVal = editingProduct.ritual_en || editingProduct.long_description_en || "";
+
     try {
       if (editingProduct.id) {
         await updateProduct.mutateAsync({
@@ -328,14 +339,17 @@ const AdminProducts = () => {
             slug,
             price: basePrice,
             description: editingProduct.description,
-            long_description: editingProduct.long_description,
+            long_description: ritualVal,
+            ritual: ritualVal,
             materials: editingProduct.materials,
             name_ar: editingProduct.name_ar,
             name_en: editingProduct.name_en,
             description_ar: editingProduct.description_ar,
             description_en: editingProduct.description_en,
-            long_description_ar: editingProduct.long_description_ar,
-            long_description_en: editingProduct.long_description_en,
+            long_description_ar: ritualArVal,
+            long_description_en: ritualEnVal,
+            ritual_ar: ritualArVal,
+            ritual_en: ritualEnVal,
             materials_ar: editingProduct.materials_ar,
             materials_en: editingProduct.materials_en,
             weight: baseWeight,
@@ -360,14 +374,17 @@ const AdminProducts = () => {
           slug,
           price: basePrice,
           description: editingProduct.description,
-          long_description: editingProduct.long_description,
+          long_description: ritualVal,
+          ritual: ritualVal,
           materials: editingProduct.materials,
           name_ar: editingProduct.name_ar,
           name_en: editingProduct.name_en,
           description_ar: editingProduct.description_ar,
           description_en: editingProduct.description_en,
-          long_description_ar: editingProduct.long_description_ar,
-          long_description_en: editingProduct.long_description_en,
+          long_description_ar: ritualArVal,
+          long_description_en: ritualEnVal,
+          ritual_ar: ritualArVal,
+          ritual_en: ritualEnVal,
           materials_ar: editingProduct.materials_ar,
           materials_en: editingProduct.materials_en,
           weight: baseWeight,
@@ -1423,22 +1440,31 @@ const AdminProducts = () => {
                       {/* Onglet Français */}
                       <TabsContent value="fr" className="space-y-4 mt-0">
                         <div>
-                          <label className="text-xs font-semibold mb-1.5 block text-foreground">Description courte (Français) *</label>
+                          <label className="text-xs font-semibold mb-1.5 block text-foreground">Description & Bienfaits (Français) *</label>
                           <Textarea 
                             value={editingProduct.description} 
                             onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })} 
-                            placeholder="Saisissez une description concise et accrocheuse..."
+                            placeholder="Saisissez une description du produit et ses bienfaits naturels..."
                             rows={3} 
                             className="rounded-xl text-xs sm:text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold mb-1.5 block text-foreground">Description détaillée & Bienfaits (Français)</label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              Rituel d'application & Conseils d'utilisation (Français)
+                            </label>
+                            <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">Section 'Rituel' de la fiche</span>
+                          </div>
                           <Textarea 
-                            value={editingProduct.long_description} 
-                            onChange={(e) => setEditingProduct({ ...editingProduct, long_description: e.target.value })} 
-                            placeholder="Saisissez la description complète, les bienfaits naturels, le rituel d'application..."
-                            rows={6} 
+                            value={editingProduct.ritual || editingProduct.long_description} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditingProduct({ ...editingProduct, ritual: val, long_description: val });
+                            }} 
+                            placeholder="Détaillez ici les étapes du rituel (ex: Matin/Soir, posologie, méthode d'application ou d'infusion)..."
+                            rows={5} 
                             className="rounded-xl text-xs sm:text-sm"
                           />
                         </div>
@@ -1478,22 +1504,31 @@ const AdminProducts = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold mb-1.5 block text-right">الوصف القصير (بالعربية)</label>
+                          <label className="text-xs font-semibold mb-1.5 block text-right">الوصف والفوائد (بالعربية)</label>
                           <Textarea 
                             value={editingProduct.description_ar} 
                             onChange={(e) => setEditingProduct({ ...editingProduct, description_ar: e.target.value })} 
-                            placeholder="اكتب وصفاً موجزاً للمنتج..."
+                            placeholder="اكتب وصفاً موجزاً للمنتج وفوائده..."
                             rows={3}
                             className="text-right rounded-xl text-xs sm:text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold mb-1.5 block text-right">الوصف التفصيلي والفوائد (بالعربية)</label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">يظهر في خانة طقوس الاستخدام</span>
+                            <label className="text-xs font-semibold text-right flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              طقوس وطريقة الاستعمال (بالعربية)
+                            </label>
+                          </div>
                           <Textarea 
-                            value={editingProduct.long_description_ar} 
-                            onChange={(e) => setEditingProduct({ ...editingProduct, long_description_ar: e.target.value })} 
-                            placeholder="اكتب تفاصيل المنتج، الفوائد وطريقة الاستعمال..."
-                            rows={6}
+                            value={editingProduct.ritual_ar || editingProduct.long_description_ar} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditingProduct({ ...editingProduct, ritual_ar: val, long_description_ar: val });
+                            }} 
+                            placeholder="اشرحي هنا طريقة الاستخدام خطوة بخطوة، التوقيت، والطقوس اليومية..."
+                            rows={5}
                             className="text-right rounded-xl text-xs sm:text-sm"
                           />
                         </div>
@@ -1543,12 +1578,21 @@ const AdminProducts = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold mb-1.5 block text-foreground">Long Description (English)</label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              Application Ritual & Usage Tips (English)
+                            </label>
+                            <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">'Ritual' tab section</span>
+                          </div>
                           <Textarea 
-                            value={editingProduct.long_description_en} 
-                            onChange={(e) => setEditingProduct({ ...editingProduct, long_description_en: e.target.value })} 
-                            placeholder="Enter comprehensive treatment details and ritual..."
-                            rows={6} 
+                            value={editingProduct.ritual_en || editingProduct.long_description_en} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditingProduct({ ...editingProduct, ritual_en: val, long_description_en: val });
+                            }} 
+                            placeholder="Detail step-by-step application ritual (timing, dosage, technique)..."
+                            rows={5} 
                             className="rounded-xl text-xs sm:text-sm"
                           />
                         </div>

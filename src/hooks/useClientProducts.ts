@@ -18,6 +18,9 @@ export interface ClientProduct {
   longDescription: string;
   longDescription_ar?: string | null;
   longDescription_en?: string | null;
+  ritual?: string | null;
+  ritual_ar?: string | null;
+  ritual_en?: string | null;
   materials: string;
   materials_ar?: string | null;
   materials_en?: string | null;
@@ -63,6 +66,9 @@ function toClientProduct(p: DbProduct): ClientProduct {
     longDescription: p.long_description || "",
     longDescription_ar: p.long_description_ar,
     longDescription_en: p.long_description_en,
+    ritual: (p as any).ritual || p.long_description || "",
+    ritual_ar: (p as any).ritual_ar || p.long_description_ar || null,
+    ritual_en: (p as any).ritual_en || p.long_description_en || null,
     materials: p.materials || "",
     materials_ar: p.materials_ar,
     materials_en: p.materials_en,

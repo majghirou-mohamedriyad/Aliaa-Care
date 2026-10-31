@@ -56,7 +56,8 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  Tag
+  Tag,
+  Clock
 } from "lucide-react";
 
 interface EditingPack {
@@ -65,6 +66,7 @@ interface EditingPack {
   slug: string;
   description: string;
   long_description: string;
+  ritual: string;
   price: number;
   image: string;
   images: string[];
@@ -78,6 +80,8 @@ interface EditingPack {
   description_en: string;
   long_description_ar: string;
   long_description_en: string;
+  ritual_ar: string;
+  ritual_en: string;
 }
 
 const emptyPack: EditingPack = {
@@ -85,6 +89,7 @@ const emptyPack: EditingPack = {
   slug: "",
   description: "",
   long_description: "",
+  ritual: "",
   price: 0,
   image: "/placeholder.svg",
   images: [],
@@ -98,6 +103,8 @@ const emptyPack: EditingPack = {
   description_en: "",
   long_description_ar: "",
   long_description_en: "",
+  ritual_ar: "",
+  ritual_en: "",
 };
 
 const getProductPriceForWeight = (
@@ -179,6 +186,7 @@ const AdminPacks = () => {
           slug: p.slug,
           description: p.description,
           long_description: p.long_description,
+          ritual: (p as any).ritual || p.long_description || "",
           price: p.price,
           image: p.image,
           images: p.images || [],
@@ -192,6 +200,8 @@ const AdminPacks = () => {
           description_en: p.description_en || "",
           long_description_ar: p.long_description_ar || "",
           long_description_en: p.long_description_en || "",
+          ritual_ar: (p as any).ritual_ar || p.long_description_ar || "",
+          ritual_en: (p as any).ritual_en || p.long_description_en || "",
         });
       }
     } else if (!action) {
@@ -393,6 +403,10 @@ const AdminPacks = () => {
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "");
 
+    const ritualVal = editing.ritual || editing.long_description || "";
+    const ritualArVal = editing.ritual_ar || editing.long_description_ar || "";
+    const ritualEnVal = editing.ritual_en || editing.long_description_en || "";
+
     try {
       const coverImage = editing.images?.[0] || "/placeholder.svg";
       if (editing.id) {
@@ -402,7 +416,8 @@ const AdminPacks = () => {
             name: editing.name,
             slug,
             description: editing.description,
-            long_description: editing.long_description,
+            long_description: ritualVal,
+            ritual: ritualVal,
             price: editing.price,
             image: coverImage,
             active: editing.active,
@@ -412,8 +427,10 @@ const AdminPacks = () => {
             name_en: editing.name_en,
             description_ar: editing.description_ar,
             description_en: editing.description_en,
-            long_description_ar: editing.long_description_ar,
-            long_description_en: editing.long_description_en,
+            long_description_ar: ritualArVal,
+            long_description_en: ritualEnVal,
+            ritual_ar: ritualArVal,
+            ritual_en: ritualEnVal,
           },
           images: editing.images || [],
           items: editing.items,
@@ -424,7 +441,8 @@ const AdminPacks = () => {
           name: editing.name,
           slug,
           description: editing.description,
-          long_description: editing.long_description,
+          long_description: ritualVal,
+          ritual: ritualVal,
           price: editing.price,
           image: coverImage,
           images: editing.images || [],
@@ -436,8 +454,10 @@ const AdminPacks = () => {
           name_en: editing.name_en,
           description_ar: editing.description_ar,
           description_en: editing.description_en,
-          long_description_ar: editing.long_description_ar,
-          long_description_en: editing.long_description_en,
+          long_description_ar: ritualArVal,
+          long_description_en: ritualEnVal,
+          ritual_ar: ritualArVal,
+          ritual_en: ritualEnVal,
         });
         toast({ title: "Pack créé avec succès" });
       }
@@ -1581,25 +1601,32 @@ const AdminPacks = () => {
                       <TabsContent value="fr" className="space-y-4 mt-0 focus-visible:ring-0">
                         <div>
                           <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                            Description courte (Français) *
+                            Description & Bienfaits du coffret (Français) *
                           </label>
                           <Textarea
                             value={editing.description}
                             onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                            placeholder="Accroche commerciale résumant la promesse du pack..."
+                            placeholder="Accroche commerciale résumant la promesse et les bienfaits du pack..."
                             rows={3}
                             className="rounded-xl text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                            Description longue & Rituel conseillé (Français)
-                          </label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              Rituel d'application & Ordre des soins (Français)
+                            </label>
+                            <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">Section 'Rituel' de la fiche</span>
+                          </div>
                           <Textarea
-                            value={editing.long_description}
-                            onChange={(e) => setEditing({ ...editing, long_description: e.target.value })}
-                            placeholder="Détaillez le rituel d'utilisation, les vertus synergiques des plantes et les bienfaits attendus..."
-                            rows={9}
+                            value={editing.ritual || editing.long_description}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditing({ ...editing, ritual: val, long_description: val });
+                            }}
+                            placeholder="Détaillez le rituel d'utilisation pas à pas (ordre des soins, matin/soir, synergies des produits)..."
+                            rows={7}
                             className="rounded-xl text-sm"
                           />
                         </div>
@@ -1620,25 +1647,32 @@ const AdminPacks = () => {
                         </div>
                         <div>
                           <label className="text-xs font-semibold text-foreground mb-1.5 block text-right">
-                            الوصف المختصر (بالعربية)
+                            الوصف المختصر والفوائد (بالعربية)
                           </label>
                           <Textarea
                             value={editing.description_ar}
                             onChange={(e) => setEditing({ ...editing, description_ar: e.target.value })}
-                            placeholder="اكتب وصفاً موجزاً وجذاباً للباقة..."
+                            placeholder="اكتب وصفاً موجزاً وجذاباً للباقة وفوائدها..."
                             rows={3}
                             className="text-right rounded-xl text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-foreground mb-1.5 block text-right">
-                            الوصف التفصيلي وطريقة الاستعمال (بالعربية)
-                          </label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">يظهر في خانة طقوس الاستخدام</span>
+                            <label className="text-xs font-semibold text-right flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              طقوس وطريقة الاستعمال للباقة (بالعربية)
+                            </label>
+                          </div>
                           <Textarea
-                            value={editing.long_description_ar}
-                            onChange={(e) => setEditing({ ...editing, long_description_ar: e.target.value })}
-                            placeholder="شرح مفصل لمكونات الباقة وكيفية استخدامها..."
-                            rows={8}
+                            value={editing.ritual_ar || editing.long_description_ar}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditing({ ...editing, ritual_ar: val, long_description_ar: val });
+                            }}
+                            placeholder="شرح مفصل لطريقة الاستخدام خطوة بخطوة وترتيب المنتجات..."
+                            rows={7}
                             className="text-right rounded-xl text-sm"
                           />
                         </div>
@@ -1670,14 +1704,21 @@ const AdminPacks = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                            Full Description & Usage Ritual (English)
-                          </label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              Application Ritual & Usage Steps (English)
+                            </label>
+                            <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full">'Ritual' tab section</span>
+                          </div>
                           <Textarea
-                            value={editing.long_description_en}
-                            onChange={(e) => setEditing({ ...editing, long_description_en: e.target.value })}
-                            placeholder="Detailed explanation of the products and ritual steps..."
-                            rows={8}
+                            value={editing.ritual_en || editing.long_description_en}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditing({ ...editing, ritual_en: val, long_description_en: val });
+                            }}
+                            placeholder="Detailed explanation of the ritual steps and product sequence..."
+                            rows={7}
                             className="rounded-xl text-sm"
                           />
                         </div>

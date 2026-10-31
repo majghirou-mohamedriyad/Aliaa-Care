@@ -146,6 +146,7 @@ const ProductDetail = () => {
   const productName = getTranslated(product, "name", lang);
   const productDescription = getTranslated(product, "description", lang) || product.description;
   const productLongDescription = getTranslated(product, "longDescription", lang) || product.longDescription;
+  const productRitual = getTranslated(product, "ritual", lang) || (product as any).ritual || productLongDescription;
   const productMaterials = getTranslated(product, "materials", lang) || product.materials;
   const isAvailable = product.stock > 0;
 
@@ -551,7 +552,7 @@ const ProductDetail = () => {
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap pb-4">
-                      {productLongDescription || productDescription}
+                      {productDescription || productLongDescription}
                     </AccordionContent>
                   </AccordionItem>
 
@@ -578,14 +579,18 @@ const ProductDetail = () => {
                         {lang === 'ar' ? "طقوس الاستخدام" : lang === 'en' ? "Application Ritual" : "Rituel d'application"}
                       </span>
                     </AccordionTrigger>
-                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-2 pb-4">
-                      <p>
-                        {lang === 'ar'
-                          ? "استخدمي هذا المستحضر بانتظام كجزء من روتينك اليومي للعناية الطبيعية للحصول على أفضل النتائج."
-                          : lang === 'en'
-                          ? "Incorporate this natural formula into your daily self-care ritual for lasting and revitalizing results."
-                          : "Intégrez ce soin dans votre rituel de beauté quotidien pour nourrir, régénérer et sublimer votre corps naturellement."}
-                      </p>
+                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed pb-4">
+                      {productRitual ? (
+                        <p className="whitespace-pre-wrap leading-relaxed">{productRitual}</p>
+                      ) : (
+                        <p className="leading-relaxed">
+                          {lang === 'ar'
+                            ? "استخدمي هذا المستحضر بانتظام كجزء من روتينك اليومي للعناية الطبيعية للحصول على أفضل النتائج."
+                            : lang === 'en'
+                            ? "Incorporate this natural formula into your daily self-care ritual for lasting and revitalizing results."
+                            : "Intégrez ce soin dans votre rituel de beauté quotidien pour nourrir, régénérer et sublimer votre corps naturellement."}
+                        </p>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
 

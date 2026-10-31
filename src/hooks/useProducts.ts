@@ -15,6 +15,9 @@ export interface DbProduct {
   long_description: string | null;
   long_description_ar?: string | null;
   long_description_en?: string | null;
+  ritual?: string | null;
+  ritual_ar?: string | null;
+  ritual_en?: string | null;
   materials: string | null;
   weight: string | number | null;
   weight_prices: { weight: string | number; price: number }[] | null;
@@ -51,8 +54,11 @@ async function fetchProducts(): Promise<DbProduct[]> {
 
   return (data || []).map((p) => ({
     ...p,
-    images: (p.images || []).map((img) => img.image_url),
-    category_ids: (p.categories || []).map((cat) => cat.category_id),
+    ritual: (p as any).ritual || p.long_description || "",
+    ritual_ar: (p as any).ritual_ar || p.long_description_ar || null,
+    ritual_en: (p as any).ritual_en || p.long_description_en || null,
+    images: (p.images || []).map((img: any) => img.image_url),
+    category_ids: (p.categories || []).map((cat: any) => cat.category_id),
   })) as unknown as DbProduct[];
 }
 
@@ -74,6 +80,9 @@ export function useAddProduct() {
       price: number;
       description?: string;
       long_description?: string;
+      ritual?: string;
+      ritual_ar?: string;
+      ritual_en?: string;
       materials?: string;
       weight?: string | number;
       weight_prices?: { weight: string | number; price: number }[];
@@ -99,12 +108,23 @@ export function useAddProduct() {
       category_ids: string[];
     }) => {
       const { images, category_ids, ...product } = input;
-      const { data, error } = await supabase
+      let res = await supabase
         .from("products")
         .insert(product)
         .select()
         .single();
-      if (error) throw error;
+
+      if (res.error && res.error.message && (res.error.message.includes("ritual") || res.error.message.includes("schema cache"))) {
+        const { ritual, ritual_ar, ritual_en, ...fallbackProduct } = product as any;
+        res = await supabase
+          .from("products")
+          .insert(fallbackProduct)
+          .select()
+          .single();
+      }
+
+      if (res.error) throw res.error;
+      const data = res.data;
 
       if (images.length > 0) {
         await supabase.from("product_images").insert(
@@ -127,12 +147,50 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      updates: Partial<{ active: boolean; cost_price: number | null; description: string | null; description_ar: string | null; description_en: string | null; featured: boolean | null; is_new: boolean | null; free_shipping: boolean | null; long_description: string | null; long_description_ar: string | null; long_description_en: string | null; materials: string | null; materials_ar: string | null; materials_en: string | null; name: string; name_ar: string | null; name_en: string | null; original_price: number | null; price: number; slug: string; stock: number; visible: boolean; weight: string | number | null; weight_prices: { weight: string | number; price: number }[] | null; flavors: string[] | null; flavors_ar: string[] | null; flavors_en: string[] | null }>;
+      updates: Partial<{
+        active: boolean;
+        cost_price: number | null;
+        description: string | null;
+        description_ar: string | null;
+        description_en: string | null;
+        featured: boolean | null;
+        is_new: boolean | null;
+        free_shipping: boolean | null;
+        long_description: string | null;
+        long_description_ar: string | null;
+        long_description_en: string | null;
+        ritual: string | null;
+        ritual_ar: string | null;
+        ritual_en: string | null;
+        materials: string | null;
+        materials_ar: string | null;
+        materials_en: string | null;
+        name: string;
+        name_ar: string | null;
+        name_en: string | null;
+        original_price: number | null;
+        price: number;
+        slug: string;
+        stock: number;
+        visible: boolean;
+        weight: string | number | null;
+        weight_prices: { weight: string | number; price: number }[] | null;
+        flavors: string[] | null;
+        flavors_ar: string[] | null;
+        flavors_en: string[] | null;
+      }>;
       images?: string[];
       category_ids?: string[];
     }) => {
       const { id, updates, images, category_ids } = input;
-      const { error } = await supabase.from("products").update(updates).eq("id", id);
+      let { error } = await supabase.from("products").update(updates).eq("id", id);
+
+      if (error && error.message && (error.message.includes("ritual") || error.message.includes("schema cache"))) {
+        const { ritual, ritual_ar, ritual_en, ...fallbackUpdates } = updates as any;
+        const retryRes = await supabase.from("products").update(fallbackUpdates).eq("id", id);
+        error = retryRes.error;
+      }
+
       if (error) throw error;
 
       if (images !== undefined) {
