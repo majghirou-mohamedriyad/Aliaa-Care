@@ -11,12 +11,16 @@ import {
   Award,
   Filter,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useProducts } from "@/hooks/useProducts";
+import { usePacks } from "@/hooks/usePacks";
+import { useOrders } from "@/hooks/useOrders";
 import {
   Select,
   SelectContent,
@@ -37,14 +41,34 @@ interface DbFeedback {
   orders?: {
     customer_name: string;
     order_number: string;
+    order_items?: {
+      product_id: string | null;
+      product_name: string;
+    }[];
   } | null;
 }
 
 export default function AdminFeedbacks() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: products = [] } = useProducts();
+  const { data: packs = [] } = usePacks();
+  const { data: orders = [] } = useOrders();
   const [search, setSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
+
+  // Lookup order items from DB directly to ensure even past orders are covered
+  const { data: orderItems = [] } = useQuery({
+    queryKey: ["order-items-lookup"],
+    queryFn: async () => {
+      const { data, error: err } = await supabase
+        .from("order_items")
+        .select("order_id, product_id, product_name");
+      if (err) return [];
+      return (data || []) as { order_id: string; product_id: string | null; product_name: string }[];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Fetch feedbacks
   const { data: feedbacks = [], isLoading, error } = useQuery<DbFeedback[]>({
@@ -65,6 +89,95 @@ export default function AdminFeedbacks() {
       return data as unknown as DbFeedback[];
     }
   });
+
+  const resolveProductInfo = (fb: DbFeedback, key: string) => {
+    // 1. Direct match by ID in products catalog
+    const productById = products.find((p) => p.id === key);
+    if (productById) {
+      return {
+        name: productById.name,
+        image: productById.images?.[0] || null,
+      };
+    }
+
+    // 2. Direct match by ID in packs catalog
+    const packById = packs.find((p) => p.id === key);
+    if (packById) {
+      return {
+        name: packById.name,
+        image: packById.image || packById.images?.[0] || null,
+      };
+    }
+
+    // 3. Match from order_items table
+    const matchedOrderItem = 
+      orderItems.find((oi) => oi.order_id === fb.order_id && (oi.product_id === key || oi.product_name === key)) ||
+      orderItems.find((oi) => oi.product_id === key || oi.product_name === key);
+    
+    // Also check useOrders
+    const orderFromHook = orders.find((o) => o.id === fb.order_id);
+    const itemFromHook = orderFromHook?.items?.find(
+      (it) => it.product_id === key || it.product_name === key
+    );
+
+    const resolvedName = matchedOrderItem?.product_name || itemFromHook?.product_name;
+
+    if (resolvedName) {
+      // Find image from products or packs by name
+      const prodByName = products.find(
+        (p) => p.name.trim().toLowerCase() === resolvedName.trim().toLowerCase()
+      );
+      if (prodByName) {
+        return {
+          name: prodByName.name,
+          image: prodByName.images?.[0] || null,
+        };
+      }
+
+      const packByName = packs.find(
+        (p) => p.name.trim().toLowerCase() === resolvedName.trim().toLowerCase()
+      );
+      if (packByName) {
+        return {
+          name: packByName.name,
+          image: packByName.image || packByName.images?.[0] || null,
+        };
+      }
+
+      return {
+        name: resolvedName,
+        image: null,
+      };
+    }
+
+    // 4. Match by name in products or packs (if key is already a product name)
+    const productByName = products.find(
+      (p) => p.name.trim().toLowerCase() === key.trim().toLowerCase()
+    );
+    if (productByName) {
+      return {
+        name: productByName.name,
+        image: productByName.images?.[0] || null,
+      };
+    }
+
+    const packByName = packs.find(
+      (p) => p.name.trim().toLowerCase() === key.trim().toLowerCase()
+    );
+    if (packByName) {
+      return {
+        name: packByName.name,
+        image: packByName.image || packByName.images?.[0] || null,
+      };
+    }
+
+    // 5. Fallback if key is UUID and truly nothing found in DB or orders
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(key);
+    return {
+      name: isUuid ? "Produit commandé" : key,
+      image: null,
+    };
+  };
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -311,24 +424,42 @@ export default function AdminFeedbacks() {
                   {fb.product_ratings && Object.keys(fb.product_ratings).length > 0 && (
                     <div className="space-y-2">
                       <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">Notes Produits</span>
-                      <div className="space-y-1.5">
-                        {Object.entries(fb.product_ratings).map(([productName, rating]) => (
-                          <div key={productName} className="flex justify-between items-center text-sm bg-neutral-50/50 p-2 rounded border border-neutral-100">
-                            <span className="text-neutral-700 truncate max-w-[200px] sm:max-w-xs">{productName}</span>
-                            <div className="flex gap-0.5 shrink-0">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`w-3.5 h-3.5 ${
-                                    star <= rating
-                                      ? "fill-amber-400 text-amber-400"
-                                      : "text-neutral-200 fill-transparent"
-                                  }`}
-                                />
-                              ))}
+                      <div className="space-y-2">
+                        {Object.entries(fb.product_ratings).map(([productKey, rating]) => {
+                          const prodInfo = resolveProductInfo(fb, productKey);
+                          return (
+                            <div key={productKey} className="flex justify-between items-center text-sm bg-neutral-50/70 p-2.5 rounded-lg border border-neutral-100 hover:border-neutral-200 transition-colors">
+                              <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                {prodInfo.image ? (
+                                  <img 
+                                    src={prodInfo.image} 
+                                    alt={prodInfo.name} 
+                                    className="w-8 h-8 rounded-md object-cover border border-neutral-200 shrink-0" 
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+                                    <Package className="w-4 h-4" />
+                                  </div>
+                                )}
+                                <span className="text-neutral-800 font-medium truncate max-w-[200px] sm:max-w-xs" title={prodInfo.name}>
+                                  {prodInfo.name}
+                                </span>
+                              </div>
+                              <div className="flex gap-0.5 shrink-0 bg-white px-2 py-1 rounded-md border border-neutral-100 shadow-2xs">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`w-3.5 h-3.5 ${
+                                      star <= rating
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "text-neutral-200 fill-transparent"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}

@@ -60,7 +60,7 @@ export default function Feedback() {
           // Initialize product ratings
           const initialRatings: Record<string, number> = {};
           orderData.items.forEach((item) => {
-            const key = item.product_id || item.product_name;
+            const key = item.product_name || item.product_id;
             initialRatings[key] = 0;
           });
           setProductRatings(initialRatings);
@@ -111,7 +111,7 @@ export default function Feedback() {
 
     // Check if all products are rated
     const unratedProducts = order?.items.filter(
-      (item) => !productRatings[item.product_id || item.product_name]
+      (item) => !productRatings[item.product_name || item.product_id]
     );
 
     if (unratedProducts && unratedProducts.length > 0) {
@@ -306,7 +306,7 @@ export default function Feedback() {
 
                       <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                         {order?.items.map((item) => {
-                          const key = item.product_id || item.product_name;
+                          const key = item.product_name || item.product_id;
                           const currentRating = productRatings[key] || 0;
                           const currentHover = hoveredProducts[key] || 0;
                           

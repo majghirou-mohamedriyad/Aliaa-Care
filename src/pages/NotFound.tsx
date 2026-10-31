@@ -7,7 +7,7 @@ import { MetaManager } from "@/seo/components/MetaManager";
 const NotFound = () => {
   return (
     <>
-      <MetaManager title="Page non trouvée" />
+      <MetaManager title="Page non trouvée" robots="noindex, nofollow" />
       <section className="py-20 md:py-28">
         <div className="container-narrow text-center">
           <motion.div

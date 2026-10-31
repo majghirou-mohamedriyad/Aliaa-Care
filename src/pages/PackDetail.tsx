@@ -60,7 +60,15 @@ const PackDetail = () => {
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
 
-  const pack = packs?.find((p) => p.slug === slug && p.active);
+  const pack = packs?.find((p) => {
+    if (!p.active) return false;
+    if (p.slug === slug) return true;
+    if (slug) {
+      if (p.slug.replace(/-+/g, "-").toLowerCase() === slug.replace(/-+/g, "-").toLowerCase()) return true;
+      if (p.slug.replace(/[^a-z0-9]/gi, "") === slug.replace(/[^a-z0-9]/gi, "")) return true;
+    }
+    return false;
+  });
 
   const nextImage = () => {
     if (!pack || !pack.images) return;

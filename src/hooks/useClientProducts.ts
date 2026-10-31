@@ -117,7 +117,15 @@ export function useClientProducts() {
 
   const banner = bannerData || { enabled: false, message: "" };
 
-  const getProductBySlug = (slug: string) => clientProducts.find((p) => p.slug === slug);
+  const getProductBySlug = (slug: string) => {
+    if (!slug) return undefined;
+    const directMatch = clientProducts.find((p) => p.slug === slug);
+    if (directMatch) return directMatch;
+    const cleanSlug = slug.replace(/-+/g, "-").toLowerCase();
+    const cleanMatch = clientProducts.find((p) => p.slug.replace(/-+/g, "-").toLowerCase() === cleanSlug);
+    if (cleanMatch) return cleanMatch;
+    return clientProducts.find((p) => p.slug.replace(/[^a-z0-9]/gi, "") === slug.replace(/[^a-z0-9]/gi, ""));
+  };
   const getCollectionBySlug = (slug: string) => clientCollections.find((c) => c.slug === slug);
   const getFeaturedProducts = () => clientProducts.filter((p) => p.featured);
   const getNewProducts = () => clientProducts.filter((p) => p.new);
