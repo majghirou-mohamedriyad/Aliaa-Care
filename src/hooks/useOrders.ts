@@ -15,7 +15,7 @@ export interface DbOrder {
   customer_region?: string;
   notes?: string;
   status_history?: { status: string; date: string; label: string }[];
-  items: { product_id: string | null; product_name: string; quantity: number; unit_price: number; cost_price: number; selected_flavors?: string[]; selected_weight?: number }[];
+  items: { id?: string; product_id: string | null; product_name: string; quantity: number; unit_price: number; cost_price: number; selected_flavors?: string[]; selected_weight?: string | number | null }[];
 }
 
 export function useOrders() {
@@ -101,7 +101,7 @@ export function useUpdateOrderDetails() {
         total: number;
         status: DbOrder['status'];
       };
-      items: { product_id: string | null; product_name: string; quantity: number; unit_price: number; cost_price: number; selected_flavors?: string[]; selected_weight?: number }[];
+      items: { id?: string; product_id: string | null; product_name: string; quantity: number; unit_price: number; cost_price: number; selected_flavors?: string[]; selected_weight?: string | number | null }[];
     }) => {
       const { id, updates, items } = input;
       
@@ -120,10 +120,26 @@ export function useUpdateOrderDetails() {
       if (deleteError) throw deleteError;
 
       if (items.length > 0) {
+        // Sanitize every item to guarantee a uniform schema for PostgREST
+        // and avoid inserting mismatched columns, extraneous 'id', or invalid UUIDs
+        const sanitizedItems = items.map((item) => ({
+          order_id: id,
+          product_id: item.product_id && String(item.product_id).trim() !== "" ? String(item.product_id).trim() : null,
+          product_name: item.product_name,
+          quantity: Math.max(1, Number(item.quantity) || 1),
+          unit_price: Number(item.unit_price) || 0,
+          cost_price: Number(item.cost_price) || 0,
+          selected_weight: item.selected_weight !== undefined && item.selected_weight !== null ? String(item.selected_weight) : null,
+          selected_flavors: Array.isArray(item.selected_flavors) ? item.selected_flavors : []
+        }));
+
         const { error: insertError } = await supabase
           .from("order_items")
-          .insert(items.map(item => ({ ...item, order_id: id })));
-        if (insertError) throw insertError;
+          .insert(sanitizedItems);
+        if (insertError) {
+          console.error("Error inserting order items:", insertError);
+          throw insertError;
+        }
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
@@ -143,7 +159,7 @@ export function useAddOrder() {
       customer_city: string;
       customer_region?: string;
       notes?: string;
-      items: { product_id?: string; product_name: string; quantity: number; unit_price: number; cost_price: number; selected_flavors?: string[]; selected_weight?: number }[];
+      items: { id?: string; product_id?: string | null; product_name: string; quantity: number; unit_price: number; cost_price: number; selected_flavors?: string[]; selected_weight?: string | number | null }[];
     }) => {
       const { items, ...order } = input;
       
@@ -160,11 +176,20 @@ export function useAddOrder() {
       }
       
       if (items.length > 0) {
+        const sanitizedItems = items.map((i) => ({
+          order_id: orderId,
+          product_id: i.product_id && String(i.product_id).trim() !== "" ? String(i.product_id).trim() : null,
+          product_name: i.product_name,
+          quantity: Math.max(1, Number(i.quantity) || 1),
+          unit_price: Number(i.unit_price) || 0,
+          cost_price: Number(i.cost_price) || 0,
+          selected_weight: i.selected_weight !== undefined && i.selected_weight !== null ? String(i.selected_weight) : null,
+          selected_flavors: Array.isArray(i.selected_flavors) ? i.selected_flavors : []
+        }));
+
         const { error: itemsError } = await supabase
           .from("order_items")
-          .insert(
-            items.map((i) => ({ ...i, order_id: orderId }))
-          );
+          .insert(sanitizedItems);
         if (itemsError) {
           console.error("Error inserting order items:", itemsError);
           throw itemsError;

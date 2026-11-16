@@ -844,12 +844,15 @@ const AdminOrders = () => {
                                     if (existingItem) {
                                       existingItem.quantity += 1;
                                     } else {
+                                      const defaultWeight = product.weight_prices?.[0]?.weight || product.weight || null;
                                       newItems.push({
                                         product_id: product.id,
                                         product_name: product.name,
                                         quantity: 1,
                                         unit_price: product.price,
-                                        cost_price: product.cost_price || 0
+                                        cost_price: product.cost_price || 0,
+                                        selected_weight: defaultWeight ? String(defaultWeight) : null,
+                                        selected_flavors: []
                                       });
                                     }
                                     setEditingOrder({ ...editingOrder, items: newItems });
