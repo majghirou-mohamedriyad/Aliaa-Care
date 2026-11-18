@@ -27,64 +27,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const loadingRef = useRef(true);
+
+  const userRef = useRef<User | null>(null);
+  const profileRef = useRef<Profile | null>(null);
+  const initialLoadedRef = useRef(false);
 
   useEffect(() => {
-    // Update ref whenever isLoading changes
-    loadingRef.current = isLoading;
-  }, [isLoading]);
+    userRef.current = user;
+  }, [user]);
 
   useEffect(() => {
-    let mounted = true;
-
-    // Step 1: Initialize from localStorage immediately (no network, no lock)
-    const initialize = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!mounted) return;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setIsLoading(false);
-        }
-      } catch {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    initialize();
-
-    // Step 2: Listen only for actual auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-
-      if (event === 'SIGNED_IN') {
-        const isNewUser = !user || user.id !== session?.user.id;
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user && isNewUser) {
-          setIsLoading(true);
-          fetchProfile(session.user.id);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setProfile(null);
-        setUser(null);
-        setSession(null);
-        setIsLoading(false);
-      } else if (event === 'TOKEN_REFRESHED') {
-        setSession(session);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    profileRef.current = profile;
+  }, [profile]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -96,9 +50,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error fetching profile:', error);
-        setProfile(null);
+        if (!profileRef.current) {
+          setProfile(null);
+          profileRef.current = null;
+        }
       } else {
-        setProfile(data as Profile);
+        const prof = data as Profile;
+        setProfile(prof);
+        profileRef.current = prof;
       }
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
@@ -106,6 +65,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    // Step 1: Initialize from session immediately
+    const initialize = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        userRef.current = initialSession?.user ?? null;
+
+        if (initialSession?.user) {
+          await fetchProfile(initialSession.user.id);
+        } else {
+          setIsLoading(false);
+        }
+      } catch {
+        if (mounted) setIsLoading(false);
+      } finally {
+        if (mounted) {
+          initialLoadedRef.current = true;
+        }
+      }
+    };
+
+    initialize();
+
+    // Step 2: Listen only for actual auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (!mounted) return;
+
+      const currentUserId = userRef.current?.id;
+      const newUserId = currentSession?.user?.id;
+
+      if (event === 'SIGNED_IN') {
+        const isDifferentUser = !currentUserId || currentUserId !== newUserId;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        userRef.current = currentSession?.user ?? null;
+
+        if (currentSession?.user) {
+          // Only fetch profile if user changed or profile not loaded yet
+          if (isDifferentUser || !profileRef.current) {
+            // Never block UI with full-screen spinner if already loaded once
+            if (!initialLoadedRef.current) {
+              setIsLoading(true);
+            }
+            await fetchProfile(currentSession.user.id);
+          }
+        } else {
+          setIsLoading(false);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setProfile(null);
+        profileRef.current = null;
+        setUser(null);
+        userRef.current = null;
+        setSession(null);
+        setIsLoading(false);
+      } else if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        userRef.current = currentSession?.user ?? null;
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
