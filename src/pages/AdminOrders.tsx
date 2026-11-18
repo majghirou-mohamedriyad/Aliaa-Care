@@ -112,10 +112,18 @@ const AdminOrders = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<DbOrder | null>(null);
   const [editingOrder, setEditingOrder] = useState<DbOrder | null>(null);
+  const [shippingFee, setShippingFee] = useState<number>(0);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [productSearchOpen, setProductSearchOpen] = useState(false);
+
+  const handleStartEdit = (order: DbOrder) => {
+    const subtotal = order.items?.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0) ?? 0;
+    const initialShipping = Math.max(0, order.total - subtotal);
+    setShippingFee(initialShipping);
+    setEditingOrder(order);
+  };
 
   const handleDelete = async () => {
     try {
@@ -153,7 +161,10 @@ const AdminOrders = () => {
     if (!editingOrder) return;
 
     try {
-      const total = editingOrder.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+      const itemsSubtotal = editingOrder.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+      const delivery = Math.max(0, Number(shippingFee) || 0);
+      const total = itemsSubtotal + delivery;
+
       await updateOrderDetails.mutateAsync({
         id: editingOrder.id,
         updates: {
@@ -402,7 +413,7 @@ const AdminOrders = () => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => setEditingOrder(order)}
+                        onClick={() => handleStartEdit(order)}
                         title="Modifier la commande"
                       >
                         <Pencil className="w-4 h-4 text-blue-600" />
@@ -505,7 +516,7 @@ const AdminOrders = () => {
                     <Button size="sm" variant="outline" onClick={() => setSelectedOrder(order)} className="gap-1.5 h-9 text-xs flex-1 sm:flex-initial">
                       <Eye className="w-3.5 h-3.5" /> Détails
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditingOrder(order)} className="gap-1.5 h-9 text-xs flex-1 sm:flex-initial">
+                    <Button size="sm" variant="outline" onClick={() => handleStartEdit(order)} className="gap-1.5 h-9 text-xs flex-1 sm:flex-initial">
                       <Pencil className="w-3.5 h-3.5" /> Modifier
                     </Button>
                     <Button size="icon" variant="ghost" onClick={() => openWhatsApp(order)} className="text-green-600 hover:text-green-700 hover:bg-green-50 h-9 w-9 shrink-0">
@@ -985,15 +996,67 @@ const AdminOrders = () => {
                     className="min-h-[80px] resize-none"
                   />
                 </div>
+
+                {/* Financial Summary & Delivery Fee Controls */}
+                <div className="p-4 rounded-xl border border-border/70 bg-muted/20 space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-primary" />
+                    Frais de livraison & Calculs financiers
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                    <div>
+                      <span className="text-xs text-muted-foreground block mb-0.5">Sous-total des articles :</span>
+                      <span className="font-bold text-base text-foreground">
+                        {editingOrder.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toLocaleString()} DH
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-muted-foreground block">
+                        Frais de livraison (DH)
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          value={shippingFee}
+                          onChange={(e) => setShippingFee(Math.max(0, Number(e.target.value)))}
+                          className="h-10 w-28 bg-background font-bold text-sm"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShippingFee(0)}
+                          className={`h-10 text-xs rounded-lg ${shippingFee === 0 ? "border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 font-semibold" : ""}`}
+                        >
+                          {shippingFee === 0 ? "Livraison Offerte ✓" : "Offrir la livraison"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Footer Actions */}
               <div className="p-6 bg-muted/20 border-t border-border flex justify-between items-center shrink-0">
                 <div>
-                  <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">Total recalculé</p>
-                  <p className="text-2xl font-serif font-bold text-primary">
-                    {editingOrder.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toLocaleString()} DH
-                  </p>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">Total à encaisser</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-serif font-bold text-primary">
+                      {(editingOrder.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0) + (Number(shippingFee) || 0)).toLocaleString()} DH
+                    </p>
+                    {shippingFee > 0 ? (
+                      <span className="text-xs text-muted-foreground">
+                        (dont {shippingFee} DH livraison)
+                      </span>
+                    ) : (
+                      <span className="text-xs text-emerald-600 font-medium">
+                        (livraison offerte)
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" className="h-11 px-6 rounded-none" onClick={() => setEditingOrder(null)}>Annuler</Button>
