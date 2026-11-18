@@ -64,6 +64,23 @@ export function useUpdateOrderStatus() {
   });
 }
 
+export function useUpdateOrderShippingFee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, newTotal }: { id: string; newTotal: number }) => {
+      const { data, error } = await supabase
+        .from("orders")
+        .update({ total: newTotal })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
+  });
+}
+
 export function useDeleteOrder() {
   const qc = useQueryClient();
   return useMutation({

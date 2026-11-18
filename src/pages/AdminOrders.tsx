@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useOrders, useUpdateOrderStatus, useDeleteOrder, useBulkDeleteOrders, useUpdateOrderDetails, DbOrder } from "@/hooks/useOrders";
+import { useOrders, useUpdateOrderStatus, useDeleteOrder, useBulkDeleteOrders, useUpdateOrderDetails, useUpdateOrderShippingFee, DbOrder } from "@/hooks/useOrders";
 import { useProducts } from "@/hooks/useProducts";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,7 +33,8 @@ import {
   MessageSquare,
   PackagePlus,
   ArrowUpDown,
-  Star
+  Star,
+  Check
 } from "lucide-react";
 import { generateInvoice } from "@/utils/invoiceGenerator";
 import { sendFeedbackWhatsAppRequest } from "@/lib/whatsapp";
@@ -99,6 +100,160 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
   </svg>
 );
+
+interface ShippingFeeEditorProps {
+  order: DbOrder;
+}
+
+const ShippingFeeEditor = ({ order }: ShippingFeeEditorProps) => {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  const updateShippingFee = useUpdateOrderShippingFee();
+
+  const subtotal = order.items?.reduce((acc, item) => acc + (item.unit_price * item.quantity), 0) ?? 0;
+  const currentFee = Math.max(0, Math.round((order.total - subtotal) * 100) / 100);
+  const isFree = currentFee === 0;
+
+  const [customFee, setCustomFee] = useState<string>(currentFee.toString());
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      setCustomFee(currentFee.toString());
+    }
+  };
+
+  const handleApplyFee = async (feeToApply: number) => {
+    const validFee = Math.max(0, feeToApply);
+    const newTotal = subtotal + validFee;
+    try {
+      await updateShippingFee.mutateAsync({ id: order.id, newTotal });
+      toast({
+        title: validFee === 0 ? "Livraison gratuite" : "Frais de livraison modifiés",
+        description: validFee === 0
+          ? `La livraison de la commande #${order.order_number} est désormais offerte.`
+          : `Frais de livraison fixés à ${validFee} DH (Nouveau total : ${newTotal.toLocaleString()} DH).`,
+      });
+      setOpen(false);
+    } catch (err: any) {
+      toast({
+        title: "Erreur",
+        description: err?.message || "Impossible de mettre à jour les frais de livraison.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer shadow-sm hover:scale-105",
+            isFree
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300"
+              : "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 hover:border-amber-300"
+          )}
+          title="Modifier les frais de livraison"
+        >
+          <Truck className={cn("w-3.5 h-3.5", isFree ? "text-emerald-600" : "text-amber-600")} />
+          <span>{isFree ? "Gratuite (0 DH)" : `${currentFee} DH`}</span>
+          <Pencil className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="center"
+        onClick={(e) => e.stopPropagation()}
+        className="w-72 p-4 space-y-3 bg-card border-border shadow-lg"
+      >
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Livraison</span>
+            <span className="text-xs font-mono font-medium text-primary">#{order.order_number}</span>
+          </div>
+          <p className="text-sm font-medium">Modifier les frais de port</p>
+        </div>
+
+        <div className="bg-muted/40 rounded-lg p-2.5 space-y-1 text-xs border border-border/50">
+          <div className="flex justify-between text-muted-foreground">
+            <span>Sous-total articles :</span>
+            <span className="font-mono text-foreground font-medium">{subtotal.toLocaleString()} DH</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>Frais actuels :</span>
+            <span className={cn("font-medium", isFree ? "text-emerald-600 font-semibold" : "text-foreground")}>
+              {isFree ? "Gratuite (0 DH)" : `${currentFee} DH`}
+            </span>
+          </div>
+          <div className="flex justify-between text-muted-foreground pt-1 border-t border-border/40">
+            <span>Total commande :</span>
+            <span className="font-mono font-bold text-foreground">{order.total.toLocaleString()} DH</span>
+          </div>
+        </div>
+
+        {/* Quick action: make free */}
+        <Button
+          type="button"
+          size="sm"
+          variant={isFree ? "secondary" : "default"}
+          className={cn(
+            "w-full text-xs font-medium gap-1.5 h-8",
+            !isFree && "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+          )}
+          disabled={updateShippingFee.isPending || isFree}
+          onClick={() => handleApplyFee(0)}
+        >
+          {updateShippingFee.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Check className="w-3.5 h-3.5" />
+          )}
+          {isFree ? "Livraison déjà offerte ✓" : "Rendre la livraison gratuite (0 DH)"}
+        </Button>
+
+        {/* Custom amount */}
+        <div className="space-y-1.5 pt-1 border-t border-border/50">
+          <span className="text-[11px] text-muted-foreground block font-medium">Modifier le montant :</span>
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                value={customFee}
+                onChange={(e) => setCustomFee(e.target.value)}
+                placeholder="Ex: 35"
+                className="h-8 text-xs pr-8 font-mono"
+                disabled={updateShippingFee.isPending}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleApplyFee(parseFloat(customFee) || 0);
+                  }
+                }}
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                DH
+              </span>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs px-2.5 shrink-0"
+              disabled={updateShippingFee.isPending || customFee === "" || isNaN(parseFloat(customFee))}
+              onClick={() => handleApplyFee(parseFloat(customFee) || 0)}
+            >
+              Appliquer
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 const AdminOrders = () => {
   const { data: orders = [], isLoading } = useOrders();
@@ -345,6 +500,7 @@ const AdminOrders = () => {
                 <th className="text-left p-4 font-medium">Heure</th>
                 <th className="text-right p-4 font-medium">Total</th>
                 <th className="text-center p-4 font-medium">Statut</th>
+                <th className="text-center p-4 font-medium">Livraison</th>
                 <th className="text-right p-4 font-medium">Actions</th>
               </tr>
             </thead>
@@ -399,6 +555,11 @@ const AdminOrders = () => {
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-center">
+                        <ShippingFeeEditor order={order} />
                       </div>
                     </td>
                     <td className="p-4 text-right space-x-1">
@@ -481,25 +642,28 @@ const AdminOrders = () => {
                       </p>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
-                        <StatusIcon className="w-3.5 h-3.5" />
-                        {statusInfo.label}
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      {(Object.keys(statusConfig) as Array<keyof typeof statusConfig>).map((status) => (
-                        <DropdownMenuItem
-                          key={status}
-                          onClick={() => handleStatusChange(order.id, status)}
-                          className="cursor-pointer"
-                        >
-                          {statusConfig[status].label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
+                          <StatusIcon className="w-3.5 h-3.5" />
+                          {statusInfo.label}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        {(Object.keys(statusConfig) as Array<keyof typeof statusConfig>).map((status) => (
+                          <DropdownMenuItem
+                            key={status}
+                            onClick={() => handleStatusChange(order.id, status)}
+                            className="cursor-pointer"
+                          >
+                            {statusConfig[status].label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <ShippingFeeEditor order={order} />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1 text-sm">
